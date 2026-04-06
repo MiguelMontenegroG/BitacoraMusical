@@ -165,10 +165,15 @@ export function Dashboard({ entries }: DashboardProps) {
 
   const getRatingByType = (): TypeRatingData[] => {
     const albumEntries = entries.filter((e) => e.type === 'album');
+    const epEntries = entries.filter((e) => e.type === 'ep');
     const songEntries = entries.filter((e) => e.type === 'song');
 
     const albumAvg = albumEntries.length > 0
       ? Math.round((albumEntries.reduce((sum, e) => sum + e.rating, 0) / albumEntries.length) * 10) / 10
+      : 0;
+    
+    const epAvg = epEntries.length > 0
+      ? Math.round((epEntries.reduce((sum, e) => sum + e.rating, 0) / epEntries.length) * 10) / 10
       : 0;
     
     const songAvg = songEntries.length > 0
@@ -177,12 +182,14 @@ export function Dashboard({ entries }: DashboardProps) {
 
     return [
       { type: 'Álbumes', averageRating: albumAvg, count: albumEntries.length },
+      { type: 'EPs', averageRating: epAvg, count: epEntries.length },
       { type: 'Canciones', averageRating: songAvg, count: songEntries.length },
     ];
   };
 
   const getAllAlbums = (): AlbumData[] => {
-    const albumEntries = entries.filter((e) => e.type === 'album');
+    // Filtrar solo álbumes y EPs, excluir singles (type === 'song')
+    const albumEntries = entries.filter((e) => e.type === 'album' || e.type === 'ep');
     
     return albumEntries
       .sort((a, b) => b.rating - a.rating)

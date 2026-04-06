@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
-import { Slider } from './ui/slider';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { MusicEntry } from '@/hooks/useMusicJournal';
@@ -34,8 +33,8 @@ export function AlbumDetailsModal({
   const [isLoading, setIsLoading] = useState(false);
   
   // Estado para ratings individuales de cada track
-  const [trackRatings, setTrackRatings] = useState<Record<string, { rating: number; review: string; tags: string[] }>>({});
-  const [albumRating, setAlbumRating] = useState<{ rating: number; review: string; tags: string[] } | null>(null);
+  const [trackRatings, setTrackRatings] = useState<Record<string, { rating: string; review: string; tags: string[] }>>({});
+  const [albumRating, setAlbumRating] = useState<{ rating: string; review: string; tags: string[] } | null>(null);
   const [expandedTrack, setExpandedTrack] = useState<string | null>(null);
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({});
 
@@ -54,7 +53,7 @@ export function AlbumDetailsModal({
     
     if (albumEntry) {
       setAlbumRating({
-        rating: albumEntry.rating,
+        rating: albumEntry.rating.toString(),
         review: albumEntry.review,
         tags: albumEntry.mood ? albumEntry.mood.split(', ').filter(Boolean) : [],
       });
@@ -69,7 +68,7 @@ export function AlbumDetailsModal({
       
       if (trackEntry) {
         trackRatingsMap[track.name] = {
-          rating: trackEntry.rating,
+          rating: trackEntry.rating.toString(),
           review: trackEntry.review,
           tags: trackEntry.mood ? trackEntry.mood.split(', ').filter(Boolean) : [],
         };
@@ -98,24 +97,40 @@ export function AlbumDetailsModal({
 
   const handleRateAlbum = () => {
     if (!albumRating) {
-      setAlbumRating({ rating: 7.0, review: '', tags: [] });
+      setAlbumRating({ rating: '', review: '', tags: [] });
     }
   };
 
   const handleSaveAlbum = () => {
-    if (!albumRating) return;
+    if (!albumRating || !albumRating.rating) return;
+    
+    const numRating = parseFloat(albumRating.rating);
+    if (isNaN(numRating)) return;
+    
+    // Clasificar según número de tracks
+    const trackCount = details?.tracks?.length || 0;
+    let type: 'album' | 'song' | 'ep' = 'album';
+    
+    if (trackCount === 1) {
+      type = 'song'; // Single
+    } else if (trackCount >= 2 && trackCount <= 4) {
+      type = 'ep'; // EP
+    } else {
+      type = 'album'; // Álbum completo
+    }
     
     onSubmit({
       title: album.title,
       artist: album.artist,
       coverUrl: album.coverUrl,
-      rating: albumRating.rating,
+      rating: Math.round(numRating * 10) / 10,
       review: albumRating.review,
-      type: 'album',
+      type,
       mood: albumRating.tags.join(', '),
+      trackCount,
     });
     
-    toast.success('¡Álbum guardado exitosamente!');
+    toast.success(`¡${type === 'song' ? 'Single' : type === 'ep' ? 'EP' : 'Álbum'} guardado exitosamente!`);
     setAlbumRating(null);
   };
 
@@ -126,19 +141,9 @@ export function AlbumDetailsModal({
     if (!trackRatings[trackName]) {
       setTrackRatings(prev => ({
         ...prev,
-        [trackName]: { rating: 7.0, review: '', tags: [] },
+        [trackName]: { rating: '', review: '', tags: [] },
       }));
     }
-  };
-
-  const handleUpdateTrackRating = (trackName: string, field: 'rating' | 'review', value: any) => {
-    setTrackRatings(prev => ({
-      ...prev,
-      [trackName]: {
-        ...prev[trackName],
-        [field]: value,
-      },
-    }));
   };
 
   const handleAddTag = (trackName: string, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -147,7 +152,7 @@ export function AlbumDetailsModal({
       const tag = tagInputs[trackName].trim();
       
       setTrackRatings(prev => {
-        const current = prev[trackName] || { rating: 7.0, review: '', tags: [] };
+        const current = prev[trackName] || { rating: '', review: '', tags: [] };
         if (!current.tags.includes(tag)) {
           return {
             ...prev,
@@ -179,18 +184,55 @@ export function AlbumDetailsModal({
     });
   };
 
+  const handleRatingInputChange = (
+    trackName: string | 'album',
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    
+    // Permitir espacio en blanco
+    if (value === '') {
+      if (trackName === 'album') {
+        setAlbumRating(prev => prev ? {...prev, rating: ''} : null);
+      } else {
+        setTrackRatings(prev => ({
+          ...prev,
+          [trackName]: { ...prev[trackName], rating: '' },
+        }));
+      }
+      return;
+    }
+
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+
+    const limitedValue = Math.round(numValue * 10) / 10;
+
+    if (trackName === 'album') {
+      setAlbumRating(prev => prev ? {...prev, rating: limitedValue.toString()} : null);
+    } else {
+      setTrackRatings(prev => ({
+        ...prev,
+        [trackName]: { ...prev[trackName], rating: limitedValue.toString() },
+      }));
+    }
+  };
+
   const handleSaveTrack = (track: AlbumTrack) => {
     const rating = trackRatings[track.name];
-    if (!rating) return;
+    if (!rating || !rating.rating) return;
+    
+    const numRating = parseFloat(rating.rating);
+    if (isNaN(numRating)) return;
     
     console.log('💾 Intentando guardar canción:', track.name);
-    console.log('📊 Rating:', rating.rating);
+    console.log('📊 Rating:', numRating);
     
     onSubmit({
       title: track.name,
       artist: album.artist,
       coverUrl: album.coverUrl,
-      rating: rating.rating,
+      rating: Math.round(numRating * 10) / 10,
       review: rating.review,
       type: 'song',
       mood: rating.tags.join(', '),
@@ -293,22 +335,35 @@ export function AlbumDetailsModal({
                       {averageRating !== null && getCalifiedTracksCount() > 0 && (
                         <Button 
                           onClick={() => {
-                            // Guardar álbum con el promedio automáticamente
+                            // Clasificar según número de tracks
+                            const trackCount = details?.tracks?.length || 0;
+                            let type: 'album' | 'song' | 'ep' = 'album';
+                            
+                            if (trackCount === 1) {
+                              type = 'song'; // Single
+                            } else if (trackCount >= 2 && trackCount <= 4) {
+                              type = 'ep'; // EP
+                            } else {
+                              type = 'album'; // Álbum completo
+                            }
+                            
+                            // Guardar con el promedio automáticamente
                             onSubmit({
                               title: album.title,
                               artist: album.artist,
                               coverUrl: album.coverUrl,
                               rating: averageRating,
                               review: `Promedio automático de ${getCalifiedTracksCount()} canciones`,
-                              type: 'album',
+                              type,
                               mood: '',
+                              trackCount,
                             });
-                            toast.success(`¡Álbum guardado con promedio ${averageRating.toFixed(1)}/10!`);
+                            toast.success(`¡${type === 'song' ? 'Single' : type === 'ep' ? 'EP' : 'Álbum'} guardado con promedio ${averageRating.toFixed(1)}/10!`);
                           }}
                           className="w-full bg-primary hover:bg-primary/90"
                         >
                           <Save className="h-4 w-4 mr-2" />
-                          Guardar Álbum con Promedio ({averageRating.toFixed(1)})
+                          Guardar {details?.tracks && details.tracks.length === 1 ? 'Single' : details?.tracks && details.tracks.length <= 4 ? 'EP' : 'Álbum'} con Promedio ({averageRating.toFixed(1)})
                         </Button>
                       )}
                     </div>
@@ -317,15 +372,23 @@ export function AlbumDetailsModal({
                       <div className="space-y-3 p-3 bg-card rounded-lg border border-border">
                         <div>
                           <label className="text-xs font-medium text-foreground mb-1 block">
-                            Rating: <span className="text-primary">{albumRating.rating.toFixed(1)}</span>/10
+                            Rating del Álbum (0-10)
                           </label>
-                          <Slider
-                            min={0}
-                            max={10}
-                            step={0.1}
-                            value={[albumRating.rating]}
-                            onValueChange={(value) => setAlbumRating(prev => prev ? {...prev, rating: value[0]} : null)}
-                          />
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="10"
+                              step="0.1"
+                              value={albumRating.rating}
+                              onChange={(e) => handleRatingInputChange('album', e)}
+                              placeholder="Ej: 7.5"
+                              className="bg-secondary border-border text-sm font-semibold"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                              /10
+                            </span>
+                          </div>
                         </div>
                         
                         <Textarea
@@ -409,21 +472,32 @@ export function AlbumDetailsModal({
                             <div className="ml-9 p-3 bg-card border border-border rounded-lg space-y-3 animate-in slide-in-from-top-2">
                               <div>
                                 <label className="text-xs font-medium text-foreground mb-1 block">
-                                  Rating: <span className="text-primary">{trackData.rating.toFixed(1)}</span>/10
+                                  Rating (0-10)
                                 </label>
-                                <Slider
-                                  min={0}
-                                  max={10}
-                                  step={0.1}
-                                  value={[trackData.rating]}
-                                  onValueChange={(value) => handleUpdateTrackRating(track.name, 'rating', value[0])}
-                                />
+                                <div className="relative">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="10"
+                                    step="0.1"
+                                    value={trackData.rating}
+                                    onChange={(e) => handleRatingInputChange(track.name, e)}
+                                    placeholder="Ej: 7.5"
+                                    className="bg-secondary border-border text-sm font-semibold"
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                                    /10
+                                  </span>
+                                </div>
                               </div>
                               
                               <Textarea
                                 placeholder="Review de la canción (opcional)..."
                                 value={trackData.review}
-                                onChange={(e) => handleUpdateTrackRating(track.name, 'review', e.target.value)}
+                                onChange={(e) => setTrackRatings(prev => ({
+                                  ...prev,
+                                  [track.name]: { ...prev[track.name], review: e.target.value },
+                                }))}
                                 rows={2}
                                 className="text-sm"
                               />

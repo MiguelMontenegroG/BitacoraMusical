@@ -10,8 +10,9 @@ export interface MusicEntry {
   rating: number;
   review: string;
   date: string;
-  type: 'album' | 'song';
+  type: 'album' | 'song' | 'ep';
   mood: string;
+  trackCount?: number; // Número de tracks (para álbumes/EPs)
 }
 
 export function useMusicJournal() {
@@ -39,6 +40,7 @@ export function useMusicJournal() {
         date: entry.date,
         type: entry.type || 'song',
         mood: entry.mood || '',
+        trackCount: entry.track_count || undefined,
       }));
 
       setEntries(formattedEntries);
@@ -69,6 +71,7 @@ export function useMusicJournal() {
           review: entry.review,
           type: entry.type,
           mood: entry.mood,
+          track_count: entry.trackCount,
         })
         .select()
         .single();
@@ -85,6 +88,7 @@ export function useMusicJournal() {
         date: data.date,
         type: data.type || 'song',
         mood: data.mood || '',
+        trackCount: data.track_count || undefined,
       };
 
       setEntries((prev) => [newEntry, ...prev]);
@@ -111,6 +115,7 @@ export function useMusicJournal() {
           ...(updates.review !== undefined && { review: updates.review }),
           ...(updates.type && { type: updates.type }),
           ...(updates.mood !== undefined && { mood: updates.mood }),
+          ...(updates.trackCount !== undefined && { track_count: updates.trackCount }),
         })
         .eq('id', id);
 
