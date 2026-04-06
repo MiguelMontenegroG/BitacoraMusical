@@ -2,16 +2,32 @@
 
 import { useState } from 'react';
 import { useMusicJournal } from '@/hooks/useMusicJournal';
+import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/Sidebar';
 import { SearchBar } from '@/components/SearchBar';
 import { MusicGrid } from '@/components/MusicGrid';
 import { Dashboard } from '@/components/Dashboard';
+import { LoginModal } from '@/components/LoginModal';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Home() {
   const { entries, isLoaded, addEntry, deleteEntry } = useMusicJournal();
+  const { user, signOut, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'journal' | 'stats'>('journal');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  if (!isLoaded) {
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Sesión cerrada correctamente');
+    } catch (error) {
+      toast.error('Error al cerrar sesión');
+    }
+  };
+
+  if (!isLoaded || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center space-y-4">
@@ -34,15 +50,34 @@ export default function Home() {
         <div className="min-h-screen p-4 md:p-8 space-y-8">
           {/* Header Section */}
           <div className="space-y-4">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground">
-                {activeTab === 'journal' ? 'My Music Journal' : 'Statistics'}
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                {activeTab === 'journal'
-                  ? 'Rate and reflect on your favorite music'
-                  : 'Visualize your listening patterns and preferences'}
-              </p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-3xl font-bold text-foreground">
+                  {activeTab === 'journal' ? 'My Music Journal' : 'Statistics'}
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  {activeTab === 'journal'
+                    ? 'Rate and reflect on your favorite music'
+                    : 'Visualize your listening patterns and preferences'}
+                </p>
+              </div>
+              
+              {/* Auth Status */}
+              <div>
+                {user ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">{user.email}</span>
+                    <Button variant="outline" size="sm" onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Cerrar Sesión
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setShowLoginModal(true)}>
+                    Iniciar Sesión
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Search Bar - Only visible in journal tab */}
@@ -56,13 +91,16 @@ export default function Home() {
           {/* Content Area */}
           <div>
             {activeTab === 'journal' ? (
-              <MusicGrid entries={entries} onDelete={deleteEntry} />
+              <MusicGrid entries={entries} onDelete={deleteEntry} isAuthenticated={!!user} />
             ) : (
               <Dashboard entries={entries} />
             )}
           </div>
         </div>
       </main>
+      
+      {/* Login Modal */}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

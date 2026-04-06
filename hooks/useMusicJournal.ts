@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from './useAuth';
 
 export interface MusicEntry {
   id: string;
@@ -12,51 +14,136 @@ export interface MusicEntry {
   mood: string;
 }
 
-const STORAGE_KEY = 'musicJournal_entries';
-
 export function useMusicJournal() {
   const [entries, setEntries] = useState<MusicEntry[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { isAuthenticated } = useAuth();
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setEntries(JSON.parse(stored));
-      } catch (error) {
-        console.error('Failed to load entries from localStorage', error);
-      }
+  // Cargar entradas desde Supabase
+  const loadEntries = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('music_entries')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedEntries: MusicEntry[] = (data || []).map(entry => ({
+        id: entry.id,
+        title: entry.title,
+        artist: entry.artist,
+        coverUrl: entry.cover_url || '',
+        rating: Number(entry.rating),
+        review: entry.review || '',
+        date: entry.date,
+        type: entry.type || 'song',
+        mood: entry.mood || '',
+      }));
+
+      setEntries(formattedEntries);
+    } catch (error) {
+      console.error('Error loading entries:', error);
+    } finally {
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
   }, []);
 
-  // Save to localStorage whenever entries change
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    loadEntries();
+  }, [loadEntries]);
+
+  const addEntry = useCallback(async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
+    if (!isAuthenticated) {
+      throw new Error('Debes iniciar sesión para agregar entradas');
     }
-  }, [entries, isLoaded]);
 
-  const addEntry = useCallback((entry: Omit<MusicEntry, 'id' | 'date'>) => {
-    const newEntry: MusicEntry = {
-      ...entry,
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-    };
-    setEntries((prev) => [newEntry, ...prev]);
-    return newEntry;
-  }, []);
+    try {
+      const { data, error } = await supabase
+        .from('music_entries')
+        .insert({
+          title: entry.title,
+          artist: entry.artist,
+          cover_url: entry.coverUrl,
+          rating: entry.rating,
+          review: entry.review,
+          type: entry.type,
+          mood: entry.mood,
+        })
+        .select()
+        .single();
 
-  const updateEntry = useCallback((id: string, updates: Partial<MusicEntry>) => {
-    setEntries((prev) =>
-      prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
-    );
-  }, []);
+      if (error) throw error;
 
-  const deleteEntry = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((entry) => entry.id !== id));
-  }, []);
+      const newEntry: MusicEntry = {
+        id: data.id,
+        title: data.title,
+        artist: data.artist,
+        coverUrl: data.cover_url || '',
+        rating: Number(data.rating),
+        review: data.review || '',
+        date: data.date,
+        type: data.type || 'song',
+        mood: data.mood || '',
+      };
+
+      setEntries((prev) => [newEntry, ...prev]);
+      return newEntry;
+    } catch (error) {
+      console.error('Error adding entry:', error);
+      throw error;
+    }
+  }, [isAuthenticated]);
+
+  const updateEntry = useCallback(async (id: string, updates: Partial<MusicEntry>) => {
+    if (!isAuthenticated) {
+      throw new Error('Debes iniciar sesión para actualizar entradas');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('music_entries')
+        .update({
+          ...(updates.title && { title: updates.title }),
+          ...(updates.artist && { artist: updates.artist }),
+          ...(updates.coverUrl && { cover_url: updates.coverUrl }),
+          ...(updates.rating !== undefined && { rating: updates.rating }),
+          ...(updates.review !== undefined && { review: updates.review }),
+          ...(updates.type && { type: updates.type }),
+          ...(updates.mood !== undefined && { mood: updates.mood }),
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setEntries((prev) =>
+        prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
+      );
+    } catch (error) {
+      console.error('Error updating entry:', error);
+      throw error;
+    }
+  }, [isAuthenticated]);
+
+  const deleteEntry = useCallback(async (id: string) => {
+    if (!isAuthenticated) {
+      throw new Error('Debes iniciar sesión para eliminar entradas');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('music_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setEntries((prev) => prev.filter((entry) => entry.id !== id));
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      throw error;
+    }
+  }, [isAuthenticated]);
 
   const getRatingDistribution = useCallback(() => {
     const distribution: Record<number, number> = {};

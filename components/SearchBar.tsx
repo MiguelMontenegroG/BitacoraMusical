@@ -7,6 +7,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { RatingModal } from './RatingModal';
 import { MusicEntry } from '@/hooks/useMusicJournal';
+import { toast } from 'sonner';
 
 interface SearchBarProps {
   onAddEntry: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
@@ -61,13 +62,23 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
     setShowRatingModal(true);
   };
 
-  const handleAddEntry = (entry: Omit<MusicEntry, 'id' | 'date'>) => {
-    onAddEntry(entry);
-    setShowRatingModal(false);
-    setSearchQuery('');
-    setSearchResults([]);
-    setShowResults(false);
-    setSelectedResult(null);
+  const handleAddEntry = async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
+    try {
+      await onAddEntry(entry);
+      toast.success('¡Entrada agregada exitosamente!');
+      setShowRatingModal(false);
+      setSearchQuery('');
+      setSearchResults([]);
+      setShowResults(false);
+      setSelectedResult(null);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('iniciar sesión')) {
+        toast.error('Debes iniciar sesión para agregar entradas');
+      } else {
+        toast.error('Error al agregar la entrada. Intenta de nuevo.');
+      }
+      console.error('Error adding entry:', error);
+    }
   };
 
   return (
