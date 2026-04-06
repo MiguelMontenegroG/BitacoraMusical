@@ -35,11 +35,11 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start md:items-center justify-center z-50 p-2 md:p-4 overflow-y-auto" onClick={onClose}>
       <div 
-        className="bg-card border border-border rounded-lg w-full max-w-4xl my-8 md:my-0"
+        className="bg-card border border-border rounded-lg w-full max-w-4xl my-8 md:my-0 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Sticky */}
-        <div className="sticky top-0 bg-card border-b border-border p-4 md:p-6 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-card border-b border-border p-4 md:p-6 flex items-center justify-between z-10 shadow-sm">
           <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
             {artist.coverUrl ? (
               <img 
@@ -67,8 +67,10 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
           </button>
         </div>
 
-        {/* Stats - Scrollable horizontal en móvil */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 p-4 md:p-6 border-b border-border">
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1">
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 p-4 md:p-6 border-b border-border pt-6 md:pt-8">
           <Card className="bg-secondary border-border p-3 md:p-4 text-center">
             <p className="text-[10px] md:text-xs text-muted-foreground">Rating General</p>
             <p className="text-xl md:text-2xl font-bold text-primary">{artist.averageRating.toFixed(1)}</p>
@@ -163,6 +165,7 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

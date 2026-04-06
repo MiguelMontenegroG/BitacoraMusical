@@ -22,7 +22,7 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
                 <Music className="h-6 w-6 text-sidebar-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-sidebar-foreground bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/70 bg-clip-text">Music Journal</h1>
+                <h1 className="text-xl font-bold text-sidebar-foreground bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/70 bg-clip-text">Dashie's music blog</h1>
               </div>
             </div>
           </div>

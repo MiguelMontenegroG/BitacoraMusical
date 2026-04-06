@@ -9,7 +9,7 @@ import { RatingModal } from './RatingModal';
 import { AlbumDetailsModal } from './AlbumDetailsModal';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { toast } from 'sonner';
-import { searchMusic, SearchResult } from '@/lib/lastfm';
+import { searchMusic, SearchResult, searchAlbums } from '@/lib/lastfm';
 
 interface SearchBarProps {
   onAddEntry: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
@@ -97,7 +97,24 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
 
   const handleAddEntry = async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
     try {
-      await onAddEntry(entry);
+      const result = await onAddEntry(entry);
+      
+      if (!result) {
+        // No autenticado
+        toast.error('Debes iniciar sesión para agregar entradas', {
+          description: 'Por favor inicia sesión para guardar tus calificaciones',
+          action: {
+            label: 'Iniciar Sesión',
+            onClick: () => {
+              // Trigger login modal - necesitamos una forma de abrirlo
+              const loginButton = document.querySelector('[aria-label="Login"]') as HTMLButtonElement;
+              if (loginButton) loginButton.click();
+            }
+          }
+        });
+        return;
+      }
+      
       toast.success('¡Entrada agregada exitosamente!');
       setShowRatingModal(false);
       setSearchQuery('');
@@ -105,12 +122,8 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
       setShowResults(false);
       setSelectedResult(null);
     } catch (error) {
-      if (error instanceof Error && error.message.includes('iniciar sesión')) {
-        toast.error('Debes iniciar sesión para agregar entradas');
-      } else {
-        toast.error('Error al agregar la entrada. Intenta de nuevo.');
-      }
       console.error('Error adding entry:', error);
+      toast.error('Error al agregar la entrada. Intenta de nuevo.');
     }
   };
 
@@ -118,13 +131,66 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
   const handleAddTrackFromAlbum = async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
     console.log('🎵 Guardando canción desde álbum:', entry.title);
     try {
-      await onAddEntry(entry);
+      const result = await onAddEntry(entry);
+      
+      if (!result) {
+        toast.error('Debes iniciar sesión para guardar');
+        return;
+      }
+      
       console.log('✅ Canción guardada correctamente, modal permanece abierto');
-      // No mostramos toast aquí porque AlbumDetailsModal ya lo hace
-      // No cerramos ningún modal - permitimos seguir calificando canciones
+      toast.success('¡Canción guardada!');
     } catch (error) {
       console.error('❌ Error adding track:', error);
       toast.error('Error al guardar la canción');
+    }
+  };
+
+  // Handler para calificar álbum completo desde una canción
+  const handleRateFullAlbum = async (rating: number, tags: string[], review: string) => {
+    if (!selectedResult) return;
+    
+    try {
+      setIsSearching(true);
+      
+      // Buscar detalles del álbum usando Last.fm
+      const albumDetails = await searchAlbums(`${selectedResult.artist} ${selectedResult.title}`, 1);
+      
+      if (albumDetails.length > 0) {
+        const album = albumDetails[0];
+        
+        // Calificar el álbum completo
+        const result = await onAddEntry({
+          title: album.title,
+          artist: album.artist,
+          coverUrl: album.coverUrl,
+          rating: rating,
+          review: review,
+          type: 'album',
+          mood: tags.join(', '),
+        });
+        
+        if (!result) {
+          toast.error('Debes iniciar sesión para calificar');
+          return;
+        }
+        
+        toast.success(`¡Álbum "${album.title}" calificado con ${rating}!`);
+        
+        // Cerrar modales y limpiar
+        setShowRatingModal(false);
+        setSearchQuery('');
+        setSearchResults([]);
+        setShowResults(false);
+        setSelectedResult(null);
+      } else {
+        toast.error('No se pudo encontrar el álbum en Last.fm');
+      }
+    } catch (error) {
+      console.error('Error rating full album:', error);
+      toast.error('Error al calificar el álbum completo');
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -255,6 +321,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
             onClose={() => setShowRatingModal(false)}
             music={selectedResult}
             onSubmit={handleAddEntry}
+            onRateFullAlbum={handleRateFullAlbum}
           />
           
           {/* Album Details Modal with Tracklist */}

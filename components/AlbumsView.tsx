@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { Disc, Star, Music } from 'lucide-react';
 import { AlbumDetailsModal } from './AlbumDetailsModal';
+import { toast } from 'sonner';
 
 interface AlbumsViewProps {
   entries: MusicEntry[];
@@ -20,8 +21,8 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
   } | null>(null);
   const [showAlbumDetails, setShowAlbumDetails] = useState(false);
 
-  // Filtrar solo álbumes (entradas de tipo 'album')
-  const albums = entries.filter(entry => entry.type === 'album');
+  // Filtrar álbumes y EPs (entradas de tipo 'album' o 'ep')
+  const albums = entries.filter(entry => entry.type === 'album' || entry.type === 'ep');
 
   // Agrupar por álbum único (evitar duplicados)
   const uniqueAlbums = albums.reduce((acc, album) => {
@@ -39,8 +40,8 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <div className="text-muted-foreground text-center space-y-2">
           <Disc className="h-16 w-16 mx-auto opacity-50" />
-          <p className="text-xl">📀 No albums yet</p>
-          <p className="text-sm">Search for an album and rate it to see it here!</p>
+          <p className="text-xl">📀 No albums or EPs yet</p>
+          <p className="text-sm">Search for an album or EP and rate it to see it here!</p>
         </div>
       </div>
     );
@@ -55,17 +56,10 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
     setShowAlbumDetails(true);
   };
 
-  // Calcular estadísticas para cada álbum
+  // Calcular estadísticas para cada álbum/EP
   const getAlbumStats = (album: MusicEntry) => {
-    const songs = entries.filter(
-      e => e.type === 'song' && 
-           entries.some(a => a.type === 'album' && a.title === album.title && a.artist === album.artist)
-    );
-    
     // Buscar canciones que coincidan con este álbum específico
     const albumSongs = entries.filter(e => {
-      // Verificar si esta canción pertenece a este álbum
-      // Usamos una heurística simple: mismo artista y la canción podría estar en el álbum
       return e.type === 'song' && e.artist === album.artist;
     });
 
@@ -173,12 +167,17 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
               e => e.title === entry.title && e.artist === entry.artist && e.type === entry.type
             );
             
+            let result;
             if (existingEntry) {
               // Actualizar entrada existente
-              await onUpdateEntry(existingEntry.id, entry);
+              result = await onUpdateEntry(existingEntry.id, entry);
             } else {
               // Crear nueva entrada
-              await onAddEntry(entry);
+              result = await onAddEntry(entry);
+            }
+            
+            if (!result) {
+              toast.error('Debes iniciar sesión para guardar');
             }
           }}
           existingEntries={existingEntries}

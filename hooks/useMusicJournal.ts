@@ -57,26 +57,42 @@ export function useMusicJournal() {
 
   const addEntry = useCallback(async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
     if (!isAuthenticated) {
-      throw new Error('Debes iniciar sesión para agregar entradas');
+      return null; // Retornar null silenciosamente
     }
 
     try {
+      // Preparar datos para insertar (ahora 'ep' es válido)
+      const insertData: any = {
+        title: entry.title,
+        artist: entry.artist,
+        cover_url: entry.coverUrl,
+        rating: entry.rating,
+        review: entry.review,
+        type: entry.type, // 'album', 'song', o 'ep'
+        mood: entry.mood,
+      };
+
+      // Solo agregar track_count si existe
+      if (entry.trackCount !== undefined) {
+        insertData.track_count = entry.trackCount;
+      }
+
+      console.log('📤 Attempting to insert entry:', insertData);
+
       const { data, error } = await supabase
         .from('music_entries')
-        .insert({
-          title: entry.title,
-          artist: entry.artist,
-          cover_url: entry.coverUrl,
-          rating: entry.rating,
-          review: entry.review,
-          type: entry.type,
-          mood: entry.mood,
-          track_count: entry.trackCount,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase error:', error);
+        console.error('❌ Error details:', JSON.stringify(error, null, 2));
+        console.error('❌ Data that failed:', insertData);
+        throw new Error(`Supabase error: ${error.message || 'Unknown error'}`);
+      }
+
+      console.log('✅ Entry inserted successfully:', data);
 
       const newEntry: MusicEntry = {
         id: data.id,
@@ -94,45 +110,63 @@ export function useMusicJournal() {
       setEntries((prev) => [newEntry, ...prev]);
       return newEntry;
     } catch (error) {
-      console.error('Error adding entry:', error);
-      throw error;
+      console.error('💥 Error adding entry:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error adding entry');
     }
   }, [isAuthenticated]);
 
   const updateEntry = useCallback(async (id: string, updates: Partial<MusicEntry>) => {
     if (!isAuthenticated) {
-      throw new Error('Debes iniciar sesión para actualizar entradas');
+      return null; // Retornar null silenciosamente
     }
 
     try {
+      // Preparar datos de actualización (ahora 'ep' es válido)
+      const updateData: any = {};
+      
+      if (updates.title) updateData.title = updates.title;
+      if (updates.artist) updateData.artist = updates.artist;
+      if (updates.coverUrl) updateData.cover_url = updates.coverUrl;
+      if (updates.rating !== undefined) updateData.rating = updates.rating;
+      if (updates.review !== undefined) updateData.review = updates.review;
+      if (updates.type) updateData.type = updates.type; // 'album', 'song', o 'ep'
+      if (updates.mood !== undefined) updateData.mood = updates.mood;
+      if (updates.trackCount !== undefined) updateData.track_count = updates.trackCount;
+
+      console.log('📤 Attempting to update entry:', id, updateData);
+
       const { error } = await supabase
         .from('music_entries')
-        .update({
-          ...(updates.title && { title: updates.title }),
-          ...(updates.artist && { artist: updates.artist }),
-          ...(updates.coverUrl && { cover_url: updates.coverUrl }),
-          ...(updates.rating !== undefined && { rating: updates.rating }),
-          ...(updates.review !== undefined && { review: updates.review }),
-          ...(updates.type && { type: updates.type }),
-          ...(updates.mood !== undefined && { mood: updates.mood }),
-          ...(updates.trackCount !== undefined && { track_count: updates.trackCount }),
-        })
+        .update(updateData)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        console.error('❌ Error details:', JSON.stringify(error, null, 2));
+        console.error('❌ Data that failed:', updateData);
+        throw new Error(`Supabase update error: ${error.message || 'Unknown error'}`);
+      }
+
+      console.log('✅ Entry updated successfully');
 
       setEntries((prev) =>
         prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
       );
     } catch (error) {
-      console.error('Error updating entry:', error);
-      throw error;
+      console.error('💥 Error updating entry:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error updating entry');
     }
   }, [isAuthenticated]);
 
   const deleteEntry = useCallback(async (id: string) => {
     if (!isAuthenticated) {
-      throw new Error('Debes iniciar sesión para eliminar entradas');
+      return null; // Retornar null silenciosamente
     }
 
     try {

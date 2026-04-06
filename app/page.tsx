@@ -40,7 +40,7 @@ export default function Home() {
           <div className="inline-block">
             <div className="h-12 w-12 rounded-full border-4 border-primary border-t-accent animate-spin"></div>
           </div>
-          <p className="text-muted-foreground">Loading your Music Journal...</p>
+          <p className="text-muted-foreground">Loading Dashie's music blog...</p>
         </div>
       </div>
     );
@@ -59,7 +59,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div className="flex-1">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                  {activeTab === 'journal' ? 'My Music Journal' : 
+                  {activeTab === 'journal' ? "My Music Blog" : 
                    activeTab === 'albums' ? 'My Albums' : 
                    activeTab === 'artists' ? 'My Artists' : 
                    activeTab === 'notifications' ? 'Notifications' :

@@ -18,6 +18,7 @@ interface RatingModalProps {
     type: 'album' | 'song';
   };
   onSubmit: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
+  onRateFullAlbum?: (rating: number, tags: string[], review: string) => void;
   existingData?: {
     rating: number;
     review: string;
@@ -30,6 +31,7 @@ export function RatingModal({
   onClose,
   music,
   onSubmit,
+  onRateFullAlbum,
   existingData,
 }: RatingModalProps) {
   const [rating, setRating] = useState<string>(existingData?.rating.toString() || '');
@@ -232,21 +234,44 @@ export function RatingModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={handleClose}
-              className="border-border hover:bg-secondary"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {isSubmitting ? 'Saving...' : 'Save Entry'}
-            </Button>
+          <div className="flex flex-col gap-2">
+            {/* Botón especial para canciones: Calificar álbum completo */}
+            {music.type === 'song' && onRateFullAlbum && (
+              <Button
+                onClick={() => {
+                  const numRating = parseFloat(rating);
+                  if (!rating || isNaN(numRating) || numRating < 0 || numRating > 10) {
+                    setRatingError('El rating debe estar entre 0 y 10');
+                    return;
+                  }
+                  onRateFullAlbum(Math.round(numRating * 10) / 10, tags, review);
+                  handleClose();
+                }}
+                disabled={isSubmitting}
+                variant="outline"
+                className="border-orange-500/50 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700"
+              >
+                💿 Calificar Álbum Completo con este Rating
+              </Button>
+            )}
+            
+            {/* Botones estándar */}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="border-border hover:bg-secondary"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {isSubmitting ? 'Saving...' : 'Save Entry'}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

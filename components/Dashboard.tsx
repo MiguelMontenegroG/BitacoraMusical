@@ -12,7 +12,7 @@ import {
   Legend,
 } from 'recharts';
 import { Card } from './ui/card';
-import { TrendingUp, TrendingDown, Minus, Star, Disc } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Star, Disc, Music } from 'lucide-react';
 
 interface DashboardProps {
   entries: MusicEntry[];
@@ -188,10 +188,26 @@ export function Dashboard({ entries }: DashboardProps) {
   };
 
   const getAllAlbums = (): AlbumData[] => {
-    // Filtrar solo álbumes y EPs, excluir singles (type === 'song')
-    const albumEntries = entries.filter((e) => e.type === 'album' || e.type === 'ep');
+    // Filtrar solo álbumes (excluir EPs y singles)
+    const albumEntries = entries.filter((e) => e.type === 'album');
     
-    return albumEntries
+    // Agrupar por título y artista para evitar duplicados
+    const albumMap = new Map<string, typeof albumEntries[0]>();
+    
+    albumEntries.forEach((entry) => {
+      const key = `${entry.title}|||${entry.artist}`;
+      
+      if (!albumMap.has(key)) {
+        albumMap.set(key, entry);
+      } else {
+        const existing = albumMap.get(key)!;
+        if (entry.rating > existing.rating) {
+          albumMap.set(key, entry);
+        }
+      }
+    });
+    
+    return Array.from(albumMap.values())
       .sort((a, b) => b.rating - a.rating)
       .map((album) => ({
         id: album.id,
@@ -200,6 +216,55 @@ export function Dashboard({ entries }: DashboardProps) {
         coverUrl: album.coverUrl,
         rating: album.rating,
         date: album.date,
+      }));
+  };
+
+  const getAllEPs = (): AlbumData[] => {
+    // Filtrar solo EPs (2-4 tracks)
+    const epEntries = entries.filter((e) => e.type === 'ep');
+    
+    // Agrupar por título y artista para evitar duplicados
+    const epMap = new Map<string, typeof epEntries[0]>();
+    
+    epEntries.forEach((entry) => {
+      const key = `${entry.title}|||${entry.artist}`;
+      
+      if (!epMap.has(key)) {
+        epMap.set(key, entry);
+      } else {
+        const existing = epMap.get(key)!;
+        if (entry.rating > existing.rating) {
+          epMap.set(key, entry);
+        }
+      }
+    });
+    
+    return Array.from(epMap.values())
+      .sort((a, b) => b.rating - a.rating)
+      .map((ep) => ({
+        id: ep.id,
+        title: ep.title,
+        artist: ep.artist,
+        coverUrl: ep.coverUrl,
+        rating: ep.rating,
+        date: ep.date,
+      }));
+  };
+
+  const getAllSongs = (): AlbumData[] => {
+    // Filtrar solo canciones (type === 'song')
+    const songEntries = entries.filter((e) => e.type === 'song');
+    
+    // Ordenar por rating (mayor a menor)
+    return songEntries
+      .sort((a, b) => b.rating - a.rating)
+      .map((song) => ({
+        id: song.id,
+        title: song.title,
+        artist: song.artist,
+        coverUrl: song.coverUrl,
+        rating: song.rating,
+        date: song.date,
       }));
   };
 
@@ -239,6 +304,8 @@ export function Dashboard({ entries }: DashboardProps) {
   const monthlyTrends = getMonthlyTrends();
   const ratingByType = getRatingByType();
   const allAlbums = getAllAlbums();
+  const allEPs = getAllEPs();
+  const allSongs = getAllSongs();
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -609,6 +676,286 @@ export function Dashboard({ entries }: DashboardProps) {
                     <div className="flex-shrink-0 flex items-center gap-2">
                       <Star className="h-5 w-5 fill-accent text-accent" />
                       <span className="text-xl font-bold text-foreground">{album.rating.toFixed(1)}</span>
+                      <span className="text-sm text-muted-foreground">/10</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Top EPs Section */}
+      {allEPs.length > 0 && (
+        <>
+          <Card className="bg-gradient-to-br from-secondary to-card border-border p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Disc className="h-5 w-5 text-orange-500" />
+              <h3 className="text-lg font-semibold text-foreground">Top 5 EPs Destacados</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-6">Los EPs mejor calificados (2-4 tracks)</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {allEPs.slice(0, 5).map((ep, index) => (
+                <div
+                  key={`top-ep-${ep.id}`}
+                  className="group relative bg-card rounded-xl overflow-hidden border-2 border-orange-500/30 hover:border-orange-500 transition-all hover:scale-105 shadow-lg"
+                >
+                  {/* Ranking Badge */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${
+                      index === 0 ? 'bg-yellow-500' :
+                      index === 1 ? 'bg-gray-400' :
+                      index === 2 ? 'bg-amber-700' :
+                      'bg-orange-500'
+                    }`}>
+                      <span className="text-xs font-bold text-white">#{index + 1}</span>
+                    </div>
+                  </div>
+
+                  {/* EP Cover */}
+                  <div className="aspect-square relative overflow-hidden bg-muted">
+                    {ep.coverUrl ? (
+                      <img
+                        src={ep.coverUrl}
+                        alt={`${ep.title} - ${ep.artist}`}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-4xl">💿</span>
+                      </div>
+                    )}
+                    
+                    {/* Rating Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-bold text-white">{ep.rating.toFixed(1)}</span>
+                        <span className="text-xs text-white/70">/10</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* EP Info */}
+                  <div className="p-3 space-y-1">
+                    <h4 className="font-semibold text-sm text-foreground truncate" title={ep.title}>
+                      {ep.title}
+                    </h4>
+                    <p className="text-xs text-muted-foreground truncate" title={ep.artist}>
+                      {ep.artist}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(ep.date).toLocaleDateString('es-ES', {
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* All EPs List */}
+          {allEPs.length > 5 && (
+            <Card className="bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border-border/50 p-6 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center gap-2 mb-2">
+                <Disc className="h-5 w-5 text-orange-500" />
+                <h3 className="text-lg font-semibold text-foreground">Todos los EPs ({allEPs.length})</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-6">EPs del #6 en adelante</p>
+              
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                {allEPs.slice(5).map((ep, index) => (
+                  <div
+                    key={`list-ep-${ep.id}`}
+                    className="flex items-center gap-4 p-3 bg-card rounded-lg border border-border hover:border-orange-500/50 transition-all"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-sm font-medium text-muted-foreground">#{index + 6}</span>
+                    </div>
+
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-muted">
+                      {ep.coverUrl ? (
+                        <img
+                          src={ep.coverUrl}
+                          alt={`${ep.title} - ${ep.artist}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-2xl">💿</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm text-foreground truncate" title={ep.title}>
+                        {ep.title}
+                      </h4>
+                      <p className="text-xs text-muted-foreground truncate" title={ep.artist}>
+                        {ep.artist}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(ep.date).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      <Star className="h-5 w-5 fill-orange-500 text-orange-500" />
+                      <span className="text-xl font-bold text-foreground">{ep.rating.toFixed(1)}</span>
+                      <span className="text-sm text-muted-foreground">/10</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Top Songs Section */}
+      {allSongs.length > 0 && (
+        <>
+          <Card className="bg-gradient-to-br from-secondary to-card border-border p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Star className="h-5 w-5 text-accent fill-accent" />
+              <h3 className="text-lg font-semibold text-foreground">Top 5 Canciones Destacadas</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-6">Las canciones mejor calificadas</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {allSongs.slice(0, 5).map((song, index) => (
+                <div
+                  key={`top-song-${song.id}`}
+                  className="group relative bg-card rounded-xl overflow-hidden border-2 border-accent/30 hover:border-accent transition-all hover:scale-105 shadow-lg"
+                >
+                  {/* Ranking Badge */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${
+                      index === 0 ? 'bg-yellow-500' :
+                      index === 1 ? 'bg-gray-400' :
+                      index === 2 ? 'bg-amber-700' :
+                      'bg-accent'
+                    }`}>
+                      <span className="text-xs font-bold text-white">#{index + 1}</span>
+                    </div>
+                  </div>
+
+                  {/* Song Cover */}
+                  <div className="aspect-square relative overflow-hidden bg-muted">
+                    {song.coverUrl ? (
+                      <img
+                        src={song.coverUrl}
+                        alt={`${song.title} - ${song.artist}`}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-4xl">🎵</span>
+                      </div>
+                    )}
+                    
+                    {/* Rating Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-bold text-white">{song.rating.toFixed(1)}</span>
+                        <span className="text-xs text-white/70">/10</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Song Info */}
+                  <div className="p-3 space-y-1">
+                    <h4 className="font-semibold text-sm text-foreground truncate" title={song.title}>
+                      {song.title}
+                    </h4>
+                    <p className="text-xs text-muted-foreground truncate" title={song.artist}>
+                      {song.artist}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(song.date).toLocaleDateString('es-ES', {
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* All Songs List */}
+          {allSongs.length > 5 && (
+            <Card className="bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border-border/50 p-6 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center gap-2 mb-2">
+                <Music className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-foreground">Todas las Canciones ({allSongs.length})</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-6">Canciones del #6 en adelante</p>
+              
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                {allSongs.slice(5).map((song, index) => (
+                  <div
+                    key={`list-song-${song.id}`}
+                    className="flex items-center gap-4 p-3 bg-card rounded-lg border border-border hover:border-accent/50 transition-all"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-sm font-medium text-muted-foreground">#{index + 6}</span>
+                    </div>
+
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-muted">
+                      {song.coverUrl ? (
+                        <img
+                          src={song.coverUrl}
+                          alt={`${song.title} - ${song.artist}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-2xl">🎵</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm text-foreground truncate" title={song.title}>
+                        {song.title}
+                      </h4>
+                      <p className="text-xs text-muted-foreground truncate" title={song.artist}>
+                        {song.artist}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(song.date).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      <Star className="h-5 w-5 fill-accent text-accent" />
+                      <span className="text-xl font-bold text-foreground">{song.rating.toFixed(1)}</span>
                       <span className="text-sm text-muted-foreground">/10</span>
                     </div>
                   </div>

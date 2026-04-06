@@ -106,15 +106,16 @@ export function RecommendationForm() {
           />
         </div>
 
-        <div className="space-y-3 pt-2 border-t border-border">
-          <div className="flex items-center space-x-2">
+        <div className="space-y-3 pt-4 border-t-2 border-primary/20">
+          <div className="flex items-center space-x-3 bg-secondary/50 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
             <Checkbox
               id="anonymous"
               checked={isAnonymous}
               onCheckedChange={(checked) => setIsAnonymous(checked as boolean)}
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary h-5 w-5 border-2"
             />
-            <Label htmlFor="anonymous" className="text-sm cursor-pointer">
-              Enviar como anónimo
+            <Label htmlFor="anonymous" className="text-sm font-medium cursor-pointer select-none text-foreground">
+              👤 Enviar como anónimo
             </Label>
           </div>
 
