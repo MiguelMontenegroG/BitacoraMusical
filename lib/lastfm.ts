@@ -97,12 +97,45 @@ export async function searchTracks(query: string, page: number = 1): Promise<Sea
 
     const tracks = data.results?.trackmatches?.track || [];
     
-    return tracks.map((track: LastFmTrack) => ({
-      title: track.name,
-      artist: track.artist,
-      coverUrl: getBestImageUrl(track.image),
-      type: 'song' as const,
-    }));
+    // Procesar tracks y obtener imágenes del álbum si están disponibles
+    const results = await Promise.all(
+      tracks.map(async (track: LastFmTrack) => {
+        let coverUrl = getBestImageUrl(track.image);
+        
+        // Si no hay imagen directa, intentar obtenerla del álbum
+        if (coverUrl.includes('placeholder') && track.artist && track.name) {
+          try {
+            // Buscar info detallada del track para obtener imagen del álbum
+            const trackInfoParams = new URLSearchParams({
+              method: 'track.getInfo',
+              artist: track.artist,
+              track: track.name,
+              api_key: API_KEY,
+              format: 'json',
+            });
+            
+            const trackInfoResponse = await fetch(`${BASE_URL}?${trackInfoParams}`);
+            const trackInfoData = await trackInfoResponse.json();
+            
+            if (trackInfoData.track?.album?.image) {
+              coverUrl = getBestImageUrl(trackInfoData.track.album.image);
+            }
+          } catch (error) {
+            // Si falla, mantener el placeholder
+            console.warn(`Could not fetch track info for ${track.name}`);
+          }
+        }
+        
+        return {
+          title: track.name,
+          artist: track.artist,
+          coverUrl,
+          type: 'song' as const,
+        };
+      })
+    );
+    
+    return results;
   } catch (error) {
     console.error('Error searching tracks:', error);
     return [];
@@ -112,10 +145,19 @@ export async function searchTracks(query: string, page: number = 1): Promise<Sea
 /**
  * Búsqueda combinada: álbumes y canciones con paginación
  */
-export async function searchMusic(query: string, page: number = 1): Promise<SearchResult[]> {
+export async function searchMusic(query: string, page: number = 1, type?: 'album' | 'song'): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
-  // Buscar álbumes y tracks en paralelo
+  // Si se especifica un tipo, buscar solo ese tipo
+  if (type === 'album') {
+    return await searchAlbums(query, page);
+  }
+  
+  if (type === 'song') {
+    return await searchTracks(query, page);
+  }
+
+  // Si no se especifica tipo, buscar ambos y combinar
   const [albums, tracks] = await Promise.all([
     searchAlbums(query, page),
     searchTracks(query, page),

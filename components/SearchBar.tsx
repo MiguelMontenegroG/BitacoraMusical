@@ -36,7 +36,8 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
     setCurrentPage(1);
 
     try {
-      const results = await searchMusic(searchQuery, 1);
+      // Pasar el tipo de filtro actual a la búsqueda
+      const results = await searchMusic(searchQuery, 1, filterType === 'all' ? undefined : filterType);
       
       if (results.length === 0) {
         toast.error('No se encontraron resultados. Intenta con otro término.');
@@ -64,7 +65,8 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
     setIsSearching(true);
 
     try {
-      const moreResults = await searchMusic(searchQuery, nextPage);
+      // Pasar el tipo de filtro actual a la búsqueda
+      const moreResults = await searchMusic(searchQuery, nextPage, filterType === 'all' ? undefined : filterType);
       
       if (moreResults.length > 0) {
         setSearchResults(prev => [...prev, ...moreResults]);
