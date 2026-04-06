@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { Card } from './ui/card';
-import { Disc, Music, Star, TrendingUp, Award } from 'lucide-react';
+import { Disc, Music, Star, TrendingUp, Award, Search, X } from 'lucide-react';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import { getArtistInfo } from '@/lib/lastfm';
 
 interface ArtistData {
@@ -177,6 +180,7 @@ interface ArtistsViewProps {
 
 export function ArtistsView({ entries }: ArtistsViewProps) {
   const [selectedArtist, setSelectedArtist] = useState<ArtistData | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Agrupar entradas por artista
   const artistsMap = entries.reduce((acc, entry) => {
@@ -188,7 +192,7 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
   }, {} as Record<string, MusicEntry[]>);
 
   // Convertir a array y calcular estadísticas
-  const artists: ArtistData[] = Object.entries(artistsMap)
+  let artists: ArtistData[] = Object.entries(artistsMap)
     .map(([name, artistEntries]) => {
       const albums = artistEntries.filter(e => e.type === 'album');
       const songs = artistEntries.filter(e => e.type === 'song');
@@ -209,7 +213,15 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
     })
     .sort((a, b) => b.entries.length - a.entries.length);
 
-  if (artists.length === 0) {
+  // Filtrar por búsqueda si hay query
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim();
+    artists = artists.filter(artist => 
+      artist.name.toLowerCase().includes(query)
+    );
+  }
+
+  if (artists.length === 0 && !searchQuery) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <div className="text-muted-foreground text-center space-y-2">
@@ -221,9 +233,52 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
     );
   }
 
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
+
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Buscar artistas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10 bg-secondary border-border hover:border-primary/50 focus:border-primary"
+          />
+          {searchQuery && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleClearSearch}
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-muted"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        {searchQuery && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {artists.length} resultado{artists.length !== 1 ? 's' : ''} encontrado{artists.length !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+
+      {artists.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 px-4">
+          <div className="text-muted-foreground text-center space-y-2">
+            <Search className="h-16 w-16 mx-auto opacity-50" />
+            <p className="text-xl">No se encontraron artistas</p>
+            <p className="text-sm">Intenta con otro término de búsqueda</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {artists.map((artist, index) => (
           <Card 
             key={artist.name}
@@ -283,6 +338,7 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
           </Card>
         ))}
       </div>
+      )}
 
       {/* Artist Details Modal */}
       {selectedArtist && (

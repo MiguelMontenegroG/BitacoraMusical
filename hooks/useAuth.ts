@@ -13,6 +13,16 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+    }).catch((error) => {
+      // Silenciar errores de refresh token expirado
+      if (error.message?.includes('Refresh Token')) {
+        console.debug('Session expired, user needs to re-login');
+        setSession(null);
+        setUser(null);
+      } else {
+        console.error('Auth error:', error);
+      }
+      setLoading(false);
     });
 
     // Escuchar cambios en la autenticación
