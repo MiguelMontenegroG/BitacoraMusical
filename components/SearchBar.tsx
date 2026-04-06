@@ -8,16 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { RatingModal } from './RatingModal';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { toast } from 'sonner';
+import { searchMusic, SearchResult } from '@/lib/lastfm';
 
 interface SearchBarProps {
   onAddEntry: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
-}
-
-interface SearchResult {
-  title: string;
-  artist: string;
-  coverUrl: string;
-  type: 'album' | 'song';
 }
 
 export function SearchBar({ onAddEntry }: SearchBarProps) {
@@ -26,35 +20,30 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
   const [showResults, setShowResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    // Simulated search results - ready for API integration
-    const mockResults: SearchResult[] = [
-      {
-        title: 'The Dark Side of the Moon',
-        artist: 'Pink Floyd',
-        coverUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop',
-        type: 'album',
-      },
-      {
-        title: 'Blinding Lights',
-        artist: 'The Weeknd',
-        coverUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=300&h=300&fit=crop',
-        type: 'song',
-      },
-      {
-        title: 'Rumours',
-        artist: 'Fleetwood Mac',
-        coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&h=300&fit=crop',
-        type: 'album',
-      },
-    ];
+    setIsSearching(true);
 
-    setSearchResults(mockResults);
-    setShowResults(true);
+    try {
+      const results = await searchMusic(searchQuery);
+      
+      if (results.length === 0) {
+        toast.error('No se encontraron resultados. Intenta con otro término.');
+        setShowResults(false);
+      } else {
+        setSearchResults(results);
+        setShowResults(true);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Error al buscar. Intenta de nuevo.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleSelectResult = (result: SearchResult) => {
@@ -95,8 +84,8 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
               className="pl-10 bg-secondary border-border hover:border-primary/50 focus:border-primary"
             />
           </div>
-          <Button type="submit" className="bg-primary hover:bg-primary/90">
-            Search
+          <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={isSearching}>
+            {isSearching ? 'Buscando...' : 'Search'}
           </Button>
         </div>
       </form>
@@ -131,7 +120,7 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
                     {result.artist}
                   </p>
                   <p className="text-xs text-primary mt-1">
-                    {result.type === 'album' ? '💿 Album' : '🎵 Song'}
+                    {result.type === 'album' ? '💿 Album' : '🎵 Canción'}
                   </p>
                 </div>
               </button>
