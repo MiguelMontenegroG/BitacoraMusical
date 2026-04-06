@@ -33,57 +33,57 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
     : 0;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-start md:items-center justify-center z-50 p-2 md:p-4 overflow-y-auto" onClick={onClose}>
       <div 
-        className="bg-card border border-border rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-card border border-border rounded-lg w-full max-w-4xl my-8 md:my-0"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        {/* Header - Sticky */}
+        <div className="sticky top-0 bg-card border-b border-border p-4 md:p-6 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
             {artist.coverUrl ? (
               <img 
                 src={artist.coverUrl} 
                 alt={artist.name}
-                className="w-16 h-16 rounded-lg object-cover"
+                className="w-12 h-12 md:w-16 md:h-16 rounded-lg object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-16 h-16 rounded-lg bg-primary/20 flex items-center justify-center">
-                <span className="text-3xl">🎤</span>
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl md:text-3xl">🎤</span>
               </div>
             )}
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">{artist.name}</h2>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg md:text-2xl font-bold text-foreground truncate">{artist.name}</h2>
+              <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
                 {artist.entries.length} entradas • {artist.albumCount} álbumes • {artist.songCount} canciones
               </p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors p-2 flex-shrink-0 ml-2"
           >
             ✕
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 border-b border-border">
-          <Card className="bg-secondary border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground">Rating General</p>
-            <p className="text-2xl font-bold text-primary">{artist.averageRating.toFixed(1)}</p>
+        {/* Stats - Scrollable horizontal en móvil */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 p-4 md:p-6 border-b border-border">
+          <Card className="bg-secondary border-border p-3 md:p-4 text-center">
+            <p className="text-[10px] md:text-xs text-muted-foreground">Rating General</p>
+            <p className="text-xl md:text-2xl font-bold text-primary">{artist.averageRating.toFixed(1)}</p>
           </Card>
-          <Card className="bg-secondary border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground">Rating Álbumes</p>
-            <p className="text-2xl font-bold text-accent">{albumAvgRating.toFixed(1)}</p>
+          <Card className="bg-secondary border-border p-3 md:p-4 text-center">
+            <p className="text-[10px] md:text-xs text-muted-foreground">Rating Álbumes</p>
+            <p className="text-xl md:text-2xl font-bold text-accent">{albumAvgRating.toFixed(1)}</p>
           </Card>
-          <Card className="bg-secondary border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground">Rating Canciones</p>
-            <p className="text-2xl font-bold text-accent">{songAvgRating.toFixed(1)}</p>
+          <Card className="bg-secondary border-border p-3 md:p-4 text-center">
+            <p className="text-[10px] md:text-xs text-muted-foreground">Rating Canciones</p>
+            <p className="text-xl md:text-2xl font-bold text-accent">{songAvgRating.toFixed(1)}</p>
           </Card>
-          <Card className="bg-secondary border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground">Mejor Rating</p>
-            <p className="text-2xl font-bold text-primary">
+          <Card className="bg-secondary border-border p-3 md:p-4 text-center">
+            <p className="text-[10px] md:text-xs text-muted-foreground">Mejor Rating</p>
+            <p className="text-xl md:text-2xl font-bold text-primary">
               {Math.max(...artist.entries.map(e => e.rating)).toFixed(1)}
             </p>
           </Card>
@@ -91,12 +91,12 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
 
         {/* Albums Section */}
         {albums.length > 0 && (
-          <div className="p-6 border-b border-border">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Disc className="h-5 w-5" />
+          <div className="p-4 md:p-6 border-b border-border">
+            <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
+              <Disc className="h-4 w-4 md:h-5 md:w-5" />
               Álbumes ({albums.length})
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {albums.map((album) => (
                 <Card key={album.id} className="bg-secondary border-border overflow-hidden">
                   <div className="aspect-square relative">
@@ -108,16 +108,16 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <Disc className="h-12 w-12 text-muted-foreground" />
+                        <Disc className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground" />
                       </div>
                     )}
-                    <div className="absolute top-2 right-2 bg-primary px-2 py-1 rounded-md">
-                      <span className="text-xs font-bold text-primary-foreground">★ {album.rating.toFixed(1)}</span>
+                    <div className="absolute top-1 right-1 md:top-2 md:right-2 bg-primary px-1.5 py-0.5 md:px-2 md:py-1 rounded-md">
+                      <span className="text-[10px] md:text-xs font-bold text-primary-foreground">★ {album.rating.toFixed(1)}</span>
                     </div>
                   </div>
-                  <div className="p-3">
-                    <h4 className="font-semibold text-sm text-foreground truncate">{album.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
+                  <div className="p-2 md:p-3">
+                    <h4 className="font-semibold text-xs md:text-sm text-foreground truncate">{album.title}</h4>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                       {new Date(album.date).toLocaleDateString('es-ES', { 
                         day: 'numeric', 
                         month: 'short', 
@@ -125,7 +125,7 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
                       })}
                     </p>
                     {album.review && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{album.review}</p>
+                      <p className="text-[10px] md:text-xs text-muted-foreground mt-2 line-clamp-2">{album.review}</p>
                     )}
                   </div>
                 </Card>
@@ -136,27 +136,27 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
 
         {/* Songs Section */}
         {songs.length > 0 && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Music className="h-5 w-5" />
+          <div className="p-4 md:p-6 pb-6 md:pb-6">
+            <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
+              <Music className="h-4 w-4 md:h-5 md:w-5" />
               Canciones ({songs.length})
             </h3>
             <div className="space-y-2">
               {songs.map((song, index) => (
                 <div 
                   key={song.id}
-                  className="flex items-center gap-4 p-3 bg-secondary rounded-lg border border-border"
+                  className="flex items-center gap-2 md:gap-4 p-2 md:p-3 bg-secondary rounded-lg border border-border"
                 >
-                  <span className="text-sm text-muted-foreground w-6 text-right">#{index + 1}</span>
+                  <span className="text-xs md:text-sm text-muted-foreground w-5 md:w-6 text-right flex-shrink-0">#{index + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{song.title}</p>
+                    <p className="text-xs md:text-sm font-medium text-foreground truncate">{song.title}</p>
                     {song.mood && (
-                      <p className="text-xs text-muted-foreground mt-1">Tags: {song.mood}</p>
+                      <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 truncate">Tags: {song.mood}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 fill-accent text-accent" />
-                    <span className="text-sm font-bold text-foreground">{song.rating.toFixed(1)}</span>
+                  <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                    <Star className="h-3 w-3 md:h-4 md:w-4 fill-accent text-accent" />
+                    <span className="text-xs md:text-sm font-bold text-foreground">{song.rating.toFixed(1)}</span>
                   </div>
                 </div>
               ))}

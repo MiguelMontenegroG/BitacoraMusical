@@ -52,20 +52,20 @@ export default function Home() {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} unreadCount={unreadCount} />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="min-h-screen p-4 md:p-8 space-y-8">
+      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+        <div className="min-h-screen p-4 md:p-8 space-y-6 md:space-y-8">
           {/* Header Section */}
           <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-3xl font-bold text-foreground">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div className="flex-1">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                   {activeTab === 'journal' ? 'My Music Journal' : 
                    activeTab === 'albums' ? 'My Albums' : 
                    activeTab === 'artists' ? 'My Artists' : 
                    activeTab === 'notifications' ? 'Notifications' :
                    'Statistics'}
                 </h2>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-xs md:text-sm mt-1">
                   {activeTab === 'journal'
                     ? 'Rate and reflect on your favorite music'
                     : activeTab === 'albums'
@@ -79,13 +79,14 @@ export default function Home() {
               </div>
               
               {/* Auth Status */}
-              <div>
+              <div className="w-full sm:w-auto">
                 {user ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground font-medium">ImDashie</span>
+                    <span className="text-xs md:text-sm text-muted-foreground font-medium">ImDashie</span>
                     <Button variant="outline" size="sm" onClick={handleSignOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Cerrar Sesión
+                      <LogOut className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      <span className="hidden sm:inline">Cerrar Sesión</span>
+                      <span className="sm:hidden">Salir</span>
                     </Button>
                   </div>
                 ) : (
@@ -98,13 +99,13 @@ export default function Home() {
 
             {/* Search Bar - Only visible in journal tab */}
             {activeTab === 'journal' && (
-              <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="max-w-md">
+              <div className="flex flex-col gap-3">
+                <div className="w-full">
                   <SearchBar onAddEntry={addEntry} existingEntries={entries} />
                 </div>
                 <Button 
                   variant="outline" 
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                  className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                   onClick={() => {
                     const formElement = document.getElementById('recommendation-form');
                     if (formElement) {
