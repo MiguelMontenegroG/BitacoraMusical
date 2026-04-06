@@ -43,10 +43,11 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated }: Musi
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {entries.map((entry) => (
+      {entries.map((entry, index) => (
         <div
           key={entry.id}
-          className="group relative rounded-lg overflow-hidden bg-secondary border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10"
+          className="group relative rounded-xl overflow-hidden bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-2 animate-in fade-in zoom-in-95 fill-mode-backwards"
+          style={{ animationDelay: `${index * 50}ms` }}
         >
           {/* Cover Image */}
           <div className="aspect-square overflow-hidden bg-muted relative">

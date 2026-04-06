@@ -301,7 +301,7 @@ export function AlbumDetailsModal({
                               rating: averageRating,
                               review: `Promedio automático de ${getCalifiedTracksCount()} canciones`,
                               type: 'album',
-                              mood: 'Promedio automático',
+                              mood: '',
                             });
                             toast.success(`¡Álbum guardado con promedio ${averageRating.toFixed(1)}/10!`);
                           }}
