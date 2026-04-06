@@ -6,20 +6,23 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { RatingModal } from './RatingModal';
+import { AlbumDetailsModal } from './AlbumDetailsModal';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { toast } from 'sonner';
 import { searchMusic, SearchResult } from '@/lib/lastfm';
 
 interface SearchBarProps {
   onAddEntry: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
+  existingEntries: MusicEntry[];
 }
 
-export function SearchBar({ onAddEntry }: SearchBarProps) {
+export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showAlbumDetails, setShowAlbumDetails] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreResults, setHasMoreResults] = useState(true);
@@ -75,7 +78,15 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
 
   const handleSelectResult = (result: SearchResult) => {
     setSelectedResult(result);
-    setShowRatingModal(true);
+    
+    // Si es un álbum, mostrar detalles con tracklist
+    if (result.type === 'album') {
+      setShowAlbumDetails(true);
+      setShowResults(false); // Cerrar modal de búsqueda
+    } else {
+      // Si es una canción, ir directo al rating
+      setShowRatingModal(true);
+    }
   };
 
   const handleAddEntry = async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
@@ -94,6 +105,20 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
         toast.error('Error al agregar la entrada. Intenta de nuevo.');
       }
       console.error('Error adding entry:', error);
+    }
+  };
+
+  // Handler especial para canciones dentro del AlbumDetailsModal (no cierra el modal)
+  const handleAddTrackFromAlbum = async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
+    console.log('🎵 Guardando canción desde álbum:', entry.title);
+    try {
+      await onAddEntry(entry);
+      console.log('✅ Canción guardada correctamente, modal permanece abierto');
+      // No mostramos toast aquí porque AlbumDetailsModal ya lo hace
+      // No cerramos ningún modal - permitimos seguir calificando canciones
+    } catch (error) {
+      console.error('❌ Error adding track:', error);
+      toast.error('Error al guardar la canción');
     }
   };
 
@@ -175,12 +200,27 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
       </Dialog>
 
       {selectedResult && (
-        <RatingModal
-          isOpen={showRatingModal}
-          onClose={() => setShowRatingModal(false)}
-          music={selectedResult}
-          onSubmit={handleAddEntry}
-        />
+        <>
+          {/* Rating Modal for Songs */}
+          <RatingModal
+            isOpen={showRatingModal}
+            onClose={() => setShowRatingModal(false)}
+            music={selectedResult}
+            onSubmit={handleAddEntry}
+          />
+          
+          {/* Album Details Modal with Tracklist */}
+          <AlbumDetailsModal
+            isOpen={showAlbumDetails}
+            onClose={() => {
+              setShowAlbumDetails(false);
+              setShowResults(true); // Volver a mostrar resultados de búsqueda
+            }}
+            album={selectedResult}
+            onSubmit={handleAddEntry}
+            existingEntries={existingEntries}
+          />
+        </>
       )}
     </>
   );

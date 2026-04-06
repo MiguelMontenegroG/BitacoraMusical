@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/Sidebar';
 import { SearchBar } from '@/components/SearchBar';
 import { MusicGrid } from '@/components/MusicGrid';
+import { AlbumsView } from '@/components/AlbumsView';
 import { Dashboard } from '@/components/Dashboard';
 import { LoginModal } from '@/components/LoginModal';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,9 @@ import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Home() {
-  const { entries, isLoaded, addEntry, deleteEntry } = useMusicJournal();
+  const { entries, isLoaded, addEntry, updateEntry, deleteEntry } = useMusicJournal();
   const { user, signOut, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'journal' | 'stats'>('journal');
+  const [activeTab, setActiveTab] = useState<'journal' | 'albums' | 'stats'>('journal');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -53,11 +54,13 @@ export default function Home() {
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-3xl font-bold text-foreground">
-                  {activeTab === 'journal' ? 'My Music Journal' : 'Statistics'}
+                  {activeTab === 'journal' ? 'My Music Journal' : activeTab === 'albums' ? 'My Albums' : 'Statistics'}
                 </h2>
                 <p className="text-muted-foreground text-sm">
                   {activeTab === 'journal'
                     ? 'Rate and reflect on your favorite music'
+                    : activeTab === 'albums'
+                    ? 'View and manage your album collection'
                     : 'Visualize your listening patterns and preferences'}
                 </p>
               </div>
@@ -83,7 +86,7 @@ export default function Home() {
             {/* Search Bar - Only visible in journal tab */}
             {activeTab === 'journal' && (
               <div className="max-w-md">
-                <SearchBar onAddEntry={addEntry} />
+                <SearchBar onAddEntry={addEntry} existingEntries={entries} />
               </div>
             )}
           </div>
@@ -91,7 +94,14 @@ export default function Home() {
           {/* Content Area */}
           <div>
             {activeTab === 'journal' ? (
-              <MusicGrid entries={entries} onDelete={deleteEntry} isAuthenticated={!!user} />
+              <MusicGrid entries={entries} onDelete={deleteEntry} onUpdate={updateEntry} isAuthenticated={!!user} />
+            ) : activeTab === 'albums' ? (
+              <AlbumsView 
+                entries={entries} 
+                existingEntries={entries}
+                onAddEntry={addEntry}
+                onUpdateEntry={updateEntry}
+              />
             ) : (
               <Dashboard entries={entries} />
             )}

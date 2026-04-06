@@ -1,16 +1,34 @@
 'use client';
 
+import { useState } from 'react';
 import { MusicEntry } from '@/hooks/useMusicJournal';
-import { Trash2, Star } from 'lucide-react';
+import { Trash2, Star, Edit } from 'lucide-react';
 import { Button } from './ui/button';
+import { RatingModal } from './RatingModal';
 
 interface MusicGridProps {
   entries: MusicEntry[];
   onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<MusicEntry>) => void;
   isAuthenticated: boolean;
 }
 
-export function MusicGrid({ entries, onDelete, isAuthenticated }: MusicGridProps) {
+export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated }: MusicGridProps) {
+  const [editingEntry, setEditingEntry] = useState<MusicEntry | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const handleEditClick = (entry: MusicEntry) => {
+    setEditingEntry(entry);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateEntry = (updatedData: Omit<MusicEntry, 'id' | 'date'>) => {
+    if (editingEntry) {
+      onUpdate(editingEntry.id, updatedData);
+      setShowEditModal(false);
+      setEditingEntry(null);
+    }
+  };
+
   if (entries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -23,7 +41,8 @@ export function MusicGrid({ entries, onDelete, isAuthenticated }: MusicGridProps
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {entries.map((entry) => (
         <div
           key={entry.id}
@@ -54,8 +73,11 @@ export function MusicGrid({ entries, onDelete, isAuthenticated }: MusicGridProps
 
           {/* Content */}
           <div className="p-3 space-y-2">
-            {/* Title and Artist */}
-            <div>
+            {/* Title and Artist - Clickable for edit */}
+            <div 
+              onClick={() => isAuthenticated && handleEditClick(entry)}
+              className={isAuthenticated ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}
+            >
               <p className="font-semibold text-sm text-foreground truncate">
                 {entry.title}
               </p>
@@ -75,12 +97,17 @@ export function MusicGrid({ entries, onDelete, isAuthenticated }: MusicGridProps
 
             {/* Mood and Type */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="px-2 py-1 bg-primary/20 text-primary rounded">
-                {entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)}
-              </span>
+              {entry.mood && (
+                <span className="px-2 py-1 bg-primary/20 text-primary rounded">
+                  {entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)}
+                </span>
+              )}
               <span className="text-muted-foreground">
                 {entry.type === 'album' ? '💿' : '🎵'}
               </span>
+              {isAuthenticated && (
+                <Edit className="h-3 w-3 text-muted-foreground ml-auto" />
+              )}
             </div>
 
             {/* Review Preview */}
@@ -102,5 +129,29 @@ export function MusicGrid({ entries, onDelete, isAuthenticated }: MusicGridProps
         </div>
       ))}
     </div>
+    
+    {/* Edit Modal */}
+    {editingEntry && (
+      <RatingModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingEntry(null);
+        }}
+        music={{
+          title: editingEntry.title,
+          artist: editingEntry.artist,
+          coverUrl: editingEntry.coverUrl,
+          type: editingEntry.type,
+        }}
+        onSubmit={handleUpdateEntry}
+        existingData={{
+          rating: editingEntry.rating,
+          review: editingEntry.review,
+          tags: editingEntry.mood ? editingEntry.mood.split(', ').filter(Boolean) : [],
+        }}
+      />
+    )}
+    </>
   );
 }

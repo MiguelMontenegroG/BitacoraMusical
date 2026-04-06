@@ -19,6 +19,11 @@ interface RatingModalProps {
     type: 'album' | 'song';
   };
   onSubmit: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
+  existingData?: {
+    rating: number;
+    review: string;
+    tags: string[];
+  };
 }
 
 export function RatingModal({
@@ -26,10 +31,11 @@ export function RatingModal({
   onClose,
   music,
   onSubmit,
+  existingData,
 }: RatingModalProps) {
-  const [rating, setRating] = useState([7.0]);
-  const [review, setReview] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [rating, setRating] = useState([existingData?.rating || 7.0]);
+  const [review, setReview] = useState(existingData?.review || '');
+  const [tags, setTags] = useState<string[]>(existingData?.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 

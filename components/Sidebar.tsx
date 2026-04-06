@@ -1,11 +1,11 @@
 'use client';
 
-import { Music, BarChart3 } from 'lucide-react';
+import { Music, BarChart3, Disc } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface SidebarProps {
-  activeTab: 'journal' | 'stats';
-  onTabChange: (tab: 'journal' | 'stats') => void;
+  activeTab: 'journal' | 'albums' | 'stats';
+  onTabChange: (tab: 'journal' | 'albums' | 'stats') => void;
 }
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
@@ -34,6 +34,14 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           >
             <Music className="h-4 w-4" />
             <span>Journal</span>
+          </Button>
+          <Button
+            variant={activeTab === 'albums' ? 'default' : 'ghost'}
+            className="w-full justify-start gap-3"
+            onClick={() => onTabChange('albums')}
+          >
+            <Disc className="h-4 w-4" />
+            <span>Albums</span>
           </Button>
           <Button
             variant={activeTab === 'stats' ? 'default' : 'ghost'}
