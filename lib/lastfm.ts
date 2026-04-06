@@ -16,6 +16,20 @@ export interface LastFmAlbum {
   url: string;
 }
 
+export interface AlbumTrack {
+  name: string;
+  duration: number; // en segundos
+  url: string;
+}
+
+export interface AlbumDetails {
+  name: string;
+  artist: string;
+  coverUrl: string;
+  tracks: AlbumTrack[];
+  url: string;
+}
+
 export interface SearchResult {
   title: string;
   artist: string;
@@ -24,9 +38,9 @@ export interface SearchResult {
 }
 
 /**
- * Buscar álbumes en Last.fm
+ * Buscar álbumes en Last.fm con paginación
  */
-export async function searchAlbums(query: string): Promise<SearchResult[]> {
+export async function searchAlbums(query: string, page: number = 1): Promise<SearchResult[]> {
   if (!API_KEY) {
     console.error('Last.fm API key not configured');
     return [];
@@ -39,6 +53,7 @@ export async function searchAlbums(query: string): Promise<SearchResult[]> {
       api_key: API_KEY,
       format: 'json',
       limit: '12',
+      page: page.toString(),
     });
 
     const response = await fetch(`${BASE_URL}?${params}`);
@@ -59,9 +74,9 @@ export async function searchAlbums(query: string): Promise<SearchResult[]> {
 }
 
 /**
- * Buscar canciones/tracks en Last.fm
+ * Buscar canciones/tracks en Last.fm con paginación
  */
-export async function searchTracks(query: string): Promise<SearchResult[]> {
+export async function searchTracks(query: string, page: number = 1): Promise<SearchResult[]> {
   if (!API_KEY) {
     console.error('Last.fm API key not configured');
     return [];
@@ -74,6 +89,7 @@ export async function searchTracks(query: string): Promise<SearchResult[]> {
       api_key: API_KEY,
       format: 'json',
       limit: '12',
+      page: page.toString(),
     });
 
     const response = await fetch(`${BASE_URL}?${params}`);
@@ -94,15 +110,15 @@ export async function searchTracks(query: string): Promise<SearchResult[]> {
 }
 
 /**
- * Búsqueda combinada: álbumes y canciones
+ * Búsqueda combinada: álbumes y canciones con paginación
  */
-export async function searchMusic(query: string): Promise<SearchResult[]> {
+export async function searchMusic(query: string, page: number = 1): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
   // Buscar álbumes y tracks en paralelo
   const [albums, tracks] = await Promise.all([
-    searchAlbums(query),
-    searchTracks(query),
+    searchAlbums(query, page),
+    searchTracks(query, page),
   ]);
 
   // Combinar resultados, priorizando álbumes
@@ -113,7 +129,50 @@ export async function searchMusic(query: string): Promise<SearchResult[]> {
     index === self.findIndex(t => t.title === item.title && t.artist === item.artist)
   );
 
-  return unique.slice(0, 12); // Limitar a 12 resultados
+  return unique.slice(0, 12); // Limitar a 12 resultados por página
+}
+
+/**
+ * Obtener detalles completos de un álbum con su tracklist
+ */
+export async function getAlbumDetails(artist: string, album: string): Promise<AlbumDetails | null> {
+  if (!API_KEY) {
+    console.error('Last.fm API key not configured');
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      method: 'album.getInfo',
+      artist: artist,
+      album: album,
+      api_key: API_KEY,
+      format: 'json',
+    });
+
+    const response = await fetch(`${BASE_URL}?${params}`);
+    const data = await response.json();
+
+    const albumData = data.album;
+    if (!albumData) return null;
+
+    const tracks: AlbumTrack[] = (albumData.tracks?.track || []).map((track: any) => ({
+      name: track.name,
+      duration: track.duration ? Math.floor(track.duration / 1000) : 0,
+      url: track.url || '',
+    }));
+
+    return {
+      name: albumData.name,
+      artist: albumData.artist,
+      coverUrl: getBestImageUrl(albumData.image || []),
+      tracks,
+      url: albumData.url || '',
+    };
+  } catch (error) {
+    console.error('Error getting album details:', error);
+    return null;
+  }
 }
 
 /**

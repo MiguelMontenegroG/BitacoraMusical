@@ -21,26 +21,53 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreResults, setHasMoreResults] = useState(true);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
+    setCurrentPage(1);
 
     try {
-      const results = await searchMusic(searchQuery);
+      const results = await searchMusic(searchQuery, 1);
       
       if (results.length === 0) {
         toast.error('No se encontraron resultados. Intenta con otro término.');
         setShowResults(false);
       } else {
         setSearchResults(results);
+        setHasMoreResults(results.length === 12); // Si hay 12 resultados, probablemente hay más
         setShowResults(true);
       }
     } catch (error) {
       console.error('Search error:', error);
       toast.error('Error al buscar. Intenta de nuevo.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    const nextPage = currentPage + 1;
+    setIsSearching(true);
+
+    try {
+      const moreResults = await searchMusic(searchQuery, nextPage);
+      
+      if (moreResults.length > 0) {
+        setSearchResults(prev => [...prev, ...moreResults]);
+        setCurrentPage(nextPage);
+        setHasMoreResults(moreResults.length === 12);
+      } else {
+        setHasMoreResults(false);
+        toast.info('No hay más resultados');
+      }
+    } catch (error) {
+      console.error('Load more error:', error);
+      toast.error('Error al cargar más resultados');
     } finally {
       setIsSearching(false);
     }
@@ -126,6 +153,20 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
               </button>
             ))}
           </div>
+          
+          {/* Load More Button */}
+          {hasMoreResults && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                onClick={handleLoadMore}
+                disabled={isSearching}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                {isSearching ? 'Cargando...' : 'Cargar más resultados'}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

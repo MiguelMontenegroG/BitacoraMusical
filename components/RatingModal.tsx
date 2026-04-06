@@ -5,14 +5,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from './ui/button';
 import { Slider } from './ui/slider';
 import { Textarea } from './ui/textarea';
+import { Input } from './ui/input';
 import { MusicEntry } from '@/hooks/useMusicJournal';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
+import { X, Plus } from 'lucide-react';
 
 interface RatingModalProps {
   isOpen: boolean;
@@ -26,17 +21,6 @@ interface RatingModalProps {
   onSubmit: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
 }
 
-const MOODS = [
-  { value: 'happy', label: '😊 Happy' },
-  { value: 'sad', label: '😢 Sad' },
-  { value: 'energetic', label: '⚡ Energetic' },
-  { value: 'calm', label: '😌 Calm' },
-  { value: 'inspired', label: '✨ Inspired' },
-  { value: 'melancholic', label: '🌧️ Melancholic' },
-  { value: 'thoughtful', label: '🤔 Thoughtful' },
-  { value: 'excited', label: '🎉 Excited' },
-];
-
 export function RatingModal({
   isOpen,
   onClose,
@@ -45,15 +29,11 @@ export function RatingModal({
 }: RatingModalProps) {
   const [rating, setRating] = useState([7.0]);
   const [review, setReview] = useState('');
-  const [mood, setMood] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!mood) {
-      alert('Please select a mood');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       onSubmit({
@@ -63,7 +43,7 @@ export function RatingModal({
         rating: rating[0],
         review,
         type: music.type,
-        mood,
+        mood: tags.join(', '), // Usamos el campo mood para guardar tags
       });
     } finally {
       setIsSubmitting(false);
@@ -74,12 +54,27 @@ export function RatingModal({
   const resetForm = () => {
     setRating([7.0]);
     setReview('');
-    setMood('');
+    setTags([]);
+    setTagInput('');
   };
 
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()]);
+      }
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   return (
@@ -88,7 +83,7 @@ export function RatingModal({
         <DialogHeader>
           <DialogTitle>Rate This {music.type === 'album' ? 'Album' : 'Song'}</DialogTitle>
           <DialogDescription>
-            Add your rating, mood, and personal review for this music.
+            Add your rating and optional details for this music.
           </DialogDescription>
         </DialogHeader>
 
@@ -127,29 +122,47 @@ export function RatingModal({
             />
           </div>
 
-          {/* Mood Selector */}
+          {/* Tags/Géneros */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
-              Your Mood
+              Tags/Genres (opcional)
             </label>
-            <Select value={mood} onValueChange={setMood}>
-              <SelectTrigger className="bg-secondary border-border">
-                <SelectValue placeholder="Select your mood..." />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {MOODS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Input
+                placeholder="Escribe y presiona Enter para agregar (ej: Rock, Alternative, 90s)..."
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleAddTag}
+                className="bg-secondary border-border"
+              />
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-xs"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => handleRemoveTag(tag)}
+                        className="hover:bg-primary/30 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Presiona Enter para agregar múltiples etiquetas
+            </p>
           </div>
 
           {/* Review Text */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
-              Personal Review
+              Personal Review (opcional)
             </label>
             <Textarea
               placeholder="Write your thoughts about this music..."
