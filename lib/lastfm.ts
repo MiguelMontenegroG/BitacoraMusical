@@ -156,7 +156,15 @@ export async function getAlbumDetails(artist: string, album: string): Promise<Al
     const albumData = data.album;
     if (!albumData) return null;
 
-    const tracks: AlbumTrack[] = (albumData.tracks?.track || []).map((track: any) => ({
+    // Asegurar que tracks sea un array
+    const tracksData = albumData.tracks?.track;
+    const tracksArray = Array.isArray(tracksData) 
+      ? tracksData 
+      : tracksData 
+        ? [tracksData] // Si es un solo objeto, convertirlo a array
+        : [];
+
+    const tracks: AlbumTrack[] = tracksArray.map((track: any) => ({
       name: track.name,
       duration: track.duration ? Math.floor(track.duration / 1000) : 0,
       url: track.url || '',
