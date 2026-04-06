@@ -118,50 +118,54 @@ export function SearchBar({ onAddEntry }: SearchBarProps) {
       </form>
 
       <Dialog open={showResults} onOpenChange={setShowResults}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
+        <DialogContent className="bg-card border-border max-w-5xl h-[80vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Search Results</DialogTitle>
             <DialogDescription>
               Select an album or song to add to your journal.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {searchResults.map((result, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSelectResult(result)}
-                className="group overflow-hidden rounded-lg bg-secondary hover:bg-secondary/80 transition-all"
-              >
-                <div className="aspect-square overflow-hidden bg-muted">
-                  <img
-                    src={result.coverUrl}
-                    alt={result.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                </div>
-                <div className="p-3 text-left">
-                  <p className="font-medium text-sm truncate text-foreground">
-                    {result.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {result.artist}
-                  </p>
-                  <p className="text-xs text-primary mt-1">
-                    {result.type === 'album' ? '💿 Album' : '🎵 Canción'}
-                  </p>
-                </div>
-              </button>
-            ))}
+          
+          {/* Scrollable Results Area */}
+          <div className="flex-1 overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {searchResults.map((result, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectResult(result)}
+                  className="group overflow-hidden rounded-lg bg-secondary hover:bg-secondary/80 transition-all"
+                >
+                  <div className="aspect-square overflow-hidden bg-muted">
+                    <img
+                      src={result.coverUrl}
+                      alt={result.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <div className="p-3 text-left">
+                    <p className="font-medium text-sm truncate text-foreground">
+                      {result.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {result.artist}
+                    </p>
+                    <p className="text-xs text-primary mt-1">
+                      {result.type === 'album' ? '💿 Album' : '🎵 Canción'}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
           
-          {/* Load More Button */}
+          {/* Load More Button - Fixed at bottom */}
           {hasMoreResults && (
-            <div className="mt-4 flex justify-center">
+            <div className="flex-shrink-0 mt-4 pt-4 border-t border-border">
               <Button
                 onClick={handleLoadMore}
                 disabled={isSearching}
                 variant="outline"
-                className="w-full sm:w-auto"
+                className="w-full"
               >
                 {isSearching ? 'Cargando...' : 'Cargar más resultados'}
               </Button>
