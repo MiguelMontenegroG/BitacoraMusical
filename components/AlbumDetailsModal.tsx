@@ -7,8 +7,19 @@ import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { getAlbumDetails, AlbumDetails, AlbumTrack } from '@/lib/lastfm';
-import { Disc, Music, Star, Save, CheckCircle2, X } from 'lucide-react';
+import { Disc, Music, Star, Save, CheckCircle2, X, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts';
 
 interface AlbumDetailsModalProps {
   isOpen: boolean;
@@ -44,6 +55,14 @@ export function AlbumDetailsModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, album.title, album.artist]); // No incluir album completo para evitar re-renders innecesarios
+
+  // Cargar ratings existentes cuando los detalles estén disponibles
+  useEffect(() => {
+    if (details && details.tracks) {
+      loadExistingRatings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [details]);
 
   const loadExistingRatings = () => {
     // Cargar ratings existentes del álbum
@@ -216,6 +235,40 @@ export function AlbumDetailsModal({
         [trackName]: { ...prev[trackName], rating: limitedValue.toString() },
       }));
     }
+  };
+
+  // Preparar datos para la gráfica
+  const getChartData = () => {
+    if (!details || !details.tracks) return null;
+
+    const chartData = details.tracks.map((track, index) => {
+      const trackEntry = existingEntries.find(
+        e => e.title === track.name && e.artist === album.artist && e.type === 'song'
+      );
+      return {
+        name: track.name,
+        trackNumber: index + 1,
+        rating: trackEntry ? trackEntry.rating : null,
+      };
+    });
+
+    // Calcular media del álbum
+    const ratedTracks = chartData.filter(d => d.rating !== null);
+    const albumAvg = ratedTracks.length > 0
+      ? Math.round((ratedTracks.reduce((sum, d) => sum + (d.rating || 0), 0) / ratedTracks.length) * 10) / 10
+      : 0;
+
+    // Calcular media del artista
+    const artistEntries = existingEntries.filter(e => 
+      e.artist.toLowerCase() === album.artist.toLowerCase()
+    );
+    const artistAvg = artistEntries.length > 0
+      ? Math.round((artistEntries.reduce((sum, e) => sum + e.rating, 0) / artistEntries.length) * 10) / 10
+      : 0;
+
+    console.log('Chart Data:', { chartData, albumAvg, artistAvg, ratedTracksCount: ratedTracks.length });
+
+    return { chartData, albumAvg, artistAvg };
   };
 
   const handleSaveTrack = (track: AlbumTrack) => {
@@ -416,7 +469,136 @@ export function AlbumDetailsModal({
 
               {/* Track List */}
               {details.tracks && details.tracks.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
+                  {/* Chart Section */}
+                  {(() => {
+                    const chartInfo = getChartData();
+                    if (!chartInfo) return null;
+                    
+                    const { chartData, albumAvg, artistAvg } = chartInfo;
+                    
+                    // Si no hay ninguna canción calificada, mostrar mensaje
+                    const hasRatings = chartData.some(d => d.rating !== null);
+                    if (!hasRatings) {
+                      return (
+                        <div className="bg-secondary/50 border border-border rounded-lg p-6 text-center">
+                          <TrendingUp className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
+                          <p className="text-sm text-muted-foreground">Aún no has calificado ninguna canción de este álbum</p>
+                          <p className="text-xs text-muted-foreground mt-1">Califica algunas canciones para ver la gráfica</p>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="bg-secondary/50 border border-border rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                          <h4 className="text-sm font-semibold text-foreground">Distribución de Ratings</h4>
+                        </div>
+                        
+                        <div className="h-[300px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#404040" opacity={0.3} />
+                              <XAxis
+                                dataKey="trackNumber"
+                                tickFormatter={(value) => `#${value}`}
+                                stroke="#a3a3a3"
+                                fontSize={12}
+                                angle={-45}
+                                textAnchor="end"
+                                height={60}
+                              />
+                              <YAxis
+                                domain={[0, 10]}
+                                tickCount={11}
+                                stroke="#a3a3a3"
+                                fontSize={12}
+                              />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: '#171717',
+                                  border: '1px solid #404040',
+                                  borderRadius: '8px',
+                                  color: '#fafafa',
+                                }}
+                                labelStyle={{ color: '#fafafa', fontWeight: 'bold' }}
+                                itemStyle={{ color: '#fafafa' }}
+                                formatter={(value: number | null) => {
+                                  if (value === null) return ['No calificado', 'Rating'];
+                                  return [value.toFixed(1), 'Rating'];
+                                }}
+                                labelFormatter={(label) => {
+                                  const track = chartData.find(d => d.trackNumber === label);
+                                  return track ? `${track.name}` : `Track #${label}`;
+                                }}
+                              />
+                              <Legend 
+                                wrapperStyle={{ color: '#a3a3a3' }}
+                              />
+                              
+                              <Line
+                                type="monotone"
+                                dataKey="rating"
+                                stroke="#3b82f6"
+                                strokeWidth={2}
+                                dot={{ fill: '#3b82f6', r: 4, stroke: '#171717', strokeWidth: 2 }}
+                                activeDot={{ r: 6, fill: '#3b82f6', stroke: '#171717', strokeWidth: 2 }}
+                                name="Rating Canción"
+                                connectNulls={false}
+                              />
+                              
+                              <ReferenceLine
+                                y={albumAvg}
+                                stroke="#06b6d4"
+                                strokeDasharray="5 5"
+                                strokeWidth={2}
+                                label={{
+                                  value: `Media Álbum: ${albumAvg.toFixed(1)}`,
+                                  position: 'right',
+                                  fill: '#06b6d4',
+                                  fontSize: 11,
+                                  fontWeight: 'bold',
+                                  background: { fill: '#171717', opacity: 0.8 },
+                                }}
+                              />
+                              
+                              <ReferenceLine
+                                y={artistAvg}
+                                stroke="#f97316"
+                                strokeDasharray="3 3"
+                                strokeWidth={2}
+                                label={{
+                                  value: `Media Artista: ${artistAvg.toFixed(1)}`,
+                                  position: 'left',
+                                  fill: '#f97316',
+                                  fontSize: 11,
+                                  fontWeight: 'bold',
+                                  background: { fill: '#171717', opacity: 0.8 },
+                                }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                        
+                        <div className="mt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 bg-blue-500"></div>
+                            <span>Rating Canción</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 border-t-2 border-dashed border-cyan-500"></div>
+                            <span>Media Álbum ({albumAvg.toFixed(1)})</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 border-t-2 border-dashed border-orange-500"></div>
+                            <span>Media Artista ({artistAvg.toFixed(1)})</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                     <Music className="h-4 w-4" />
                     Tracks ({details.tracks.length})
