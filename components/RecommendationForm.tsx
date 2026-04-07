@@ -42,7 +42,10 @@ export function RecommendationForm() {
         is_anonymous: isAnonymous,
       });
 
-      toast.success('¡Recomendación enviada con éxito! 🎵');
+      toast.success('¡Recomendación enviada con éxito! 🎵', {
+        description: 'Gracias por compartir tu música conmigo',
+        duration: 5000,
+      });
       
       // Reset form
       setFormData({
@@ -52,9 +55,14 @@ export function RecommendationForm() {
         recommender_name: '',
       });
       setIsAnonymous(false);
+      
+      // Scroll suave hacia arriba para que el usuario vea el toast
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Error al enviar la recomendación. Intenta de nuevo.');
+      toast.error('Error al enviar la recomendación. Intenta de nuevo.', {
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
