@@ -58,8 +58,8 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <div className="text-muted-foreground text-center space-y-2">
-          <p className="text-xl">🎵 No entries yet</p>
-          <p className="text-sm">Start rating your favorite albums and songs!</p>
+          <p className="text-xl">🎵 Aún no hay entradas</p>
+          <p className="text-sm">¡Comienza a calificar tus álbumes y canciones favoritas!</p>
         </div>
       </div>
     );
@@ -67,7 +67,7 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
       {currentEntries.map((entry, index) => (
         <div
           key={entry.id}
@@ -98,31 +98,31 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
           </div>
 
           {/* Content */}
-          <div className="p-3 space-y-2">
+          <div className="p-4 space-y-3">
             {/* Title and Artist - Clickable for edit */}
             <div 
               onClick={() => isAuthenticated && handleEditClick(entry)}
               className={isAuthenticated ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}
             >
-              <p className="font-semibold text-sm text-foreground truncate">
+              <p className="font-semibold text-base text-foreground truncate" title={entry.title}>
                 {entry.title}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-sm text-muted-foreground truncate" title={entry.artist}>
                 {entry.artist}
               </p>
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-primary text-primary" />
-              <span className="text-sm font-medium text-foreground">
+            <div className="flex items-center gap-2">
+              <Star className="h-5 w-5 fill-primary text-primary" />
+              <span className="text-base font-bold text-foreground">
                 {entry.rating.toFixed(1)}
               </span>
-              <span className="text-xs text-muted-foreground">/10</span>
+              <span className="text-sm text-muted-foreground">/10</span>
             </div>
 
             {/* Mood and Type */}
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-sm pt-1 border-t border-border/50">
               {entry.mood && (
                 <span className="px-2 py-1 bg-primary/20 text-primary rounded">
                   {entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)}
@@ -132,20 +132,20 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
                 {entry.type === 'album' ? '💿' : '🎵'}
               </span>
               {isAuthenticated && (
-                <Edit className="h-3 w-3 text-muted-foreground ml-auto" />
+                <Edit className="h-4 w-4 text-muted-foreground ml-auto" />
               )}
             </div>
 
             {/* Review Preview */}
             {entry.review && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
+              <p className="text-sm text-muted-foreground line-clamp-2">
                 {entry.review}
               </p>
             )}
 
             {/* Date */}
-            <p className="text-xs text-muted-foreground">
-              {new Date(entry.date).toLocaleDateString('en-US', {
+            <p className="text-xs text-muted-foreground pt-1">
+              {new Date(entry.date).toLocaleDateString('es-ES', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric',
@@ -161,7 +161,7 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Info */}
         <div className="text-sm text-muted-foreground order-2 sm:order-1">
-          Showing {startIndex + 1}-{Math.min(endIndex, entries.length)} of {entries.length} entries
+          Mostrando {startIndex + 1}-{Math.min(endIndex, entries.length)} de {entries.length} entradas
         </div>
 
         {/* Page Controls */}
@@ -174,7 +174,7 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
             className="border-border hover:bg-secondary"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span className="hidden sm:inline ml-1">Previous</span>
+            <span className="hidden sm:inline ml-1">Anterior</span>
           </Button>
 
           {/* Page Numbers */}
@@ -220,7 +220,7 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
             disabled={currentPage === totalPages}
             className="border-border hover:bg-secondary"
           >
-            <span className="hidden sm:inline mr-1">Next</span>
+            <span className="hidden sm:inline mr-1">Siguiente</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

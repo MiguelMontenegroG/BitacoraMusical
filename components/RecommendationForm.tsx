@@ -7,27 +7,99 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
-import { Send, Music } from 'lucide-react';
+import { Send, Music, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRecommendations } from '@/hooks/useRecommendations';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { searchMusic, SearchResult } from '@/lib/lastfm';
 
 export function RecommendationForm() {
   const { submitRecommendation } = useRecommendations();
   const [isLoading, setIsLoading] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   
+  // Estados para el buscador
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreResults, setHasMoreResults] = useState(true);
+  const [filterType, setFilterType] = useState<'all' | 'album' | 'song'>('all');
+  
   const [formData, setFormData] = useState({
-    title: '',
-    artist: '',
     message: '',
     recommender_name: '',
   });
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    setCurrentPage(1);
+
+    try {
+      const results = await searchMusic(searchQuery, 1, filterType === 'all' ? undefined : filterType);
+      
+      if (results.length === 0) {
+        toast.error('No se encontraron resultados. Intenta con otro término.');
+        setShowResults(false);
+      } else {
+        setSearchResults(results);
+        setHasMoreResults(results.length === 12);
+        setShowResults(true);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Error al buscar. Intenta de nuevo.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    const nextPage = currentPage + 1;
+    setIsSearching(true);
+
+    try {
+      const moreResults = await searchMusic(searchQuery, nextPage, filterType === 'all' ? undefined : filterType);
+      
+      if (moreResults.length > 0) {
+        setSearchResults(prev => [...prev, ...moreResults]);
+        setCurrentPage(nextPage);
+        setHasMoreResults(moreResults.length === 12);
+      } else {
+        setHasMoreResults(false);
+        toast.info('No hay más resultados');
+      }
+    } catch (error) {
+      console.error('Load more error:', error);
+      toast.error('Error al cargar más resultados');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectTrack = (result: SearchResult) => {
+    setSelectedTrack(result);
+    setShowResults(false);
+    setSearchQuery('');
+    toast.success(`✓ ${result.title} - ${result.artist}`);
+  };
+
+  const clearSelection = () => {
+    setSelectedTrack(null);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.artist.trim()) {
-      toast.error('Por favor completa el título y el artista');
+    if (!selectedTrack) {
+      toast.error('Por favor busca y selecciona una canción o álbum');
       return;
     }
 
@@ -35,8 +107,8 @@ export function RecommendationForm() {
     
     try {
       await submitRecommendation({
-        title: formData.title.trim(),
-        artist: formData.artist.trim(),
+        title: selectedTrack.title,
+        artist: selectedTrack.artist,
         message: formData.message.trim(),
         recommender_name: isAnonymous ? undefined : formData.recommender_name.trim() || undefined,
         is_anonymous: isAnonymous,
@@ -49,11 +121,10 @@ export function RecommendationForm() {
       
       // Reset form
       setFormData({
-        title: '',
-        artist: '',
         message: '',
         recommender_name: '',
       });
+      setSelectedTrack(null);
       setIsAnonymous(false);
       
       // Scroll suave hacia arriba para que el usuario vea el toast
@@ -79,29 +150,92 @@ export function RecommendationForm() {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
-            <Input
-              id="title"
-              placeholder="Nombre del álbum o canción"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              required
-            />
+        {/* Buscador de canciones */}
+        {!selectedTrack ? (
+          <div className="space-y-3">
+            <Label>Buscar canción o álbum *</Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Escribe el nombre de la canción o álbum..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearch(e as any);
+                    }
+                  }}
+                  className="pl-10 bg-secondary border-border hover:border-primary/50 focus:border-primary"
+                />
+              </div>
+              <Button type="button" onClick={handleSearch} disabled={isSearching}>
+                {isSearching ? 'Buscando...' : 'Buscar'}
+              </Button>
+            </div>
+            
+            {/* Filtros de tipo */}
+            <div className="flex gap-2">
+              {/* <Button
+                type="button"
+                variant={filterType === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilterType('all')}
+                className="flex-1 text-xs"
+              >
+                Todos
+              </Button> */}
+              <Button
+                type="button"
+                variant={filterType === 'album' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilterType('album')}
+                className="flex-1 text-xs"
+              >
+                 Álbumes
+              </Button>
+              <Button
+                type="button"
+                variant={filterType === 'song' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilterType('song')}
+                className="flex-1 text-xs"
+              >
+                 Canciones
+              </Button>
+            </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="artist">Artista *</Label>
-            <Input
-              id="artist"
-              placeholder="Nombre del artista"
-              value={formData.artist}
-              onChange={(e) => setFormData(prev => ({ ...prev, artist: e.target.value }))}
-              required
-            />
+        ) : (
+          /* Preview de selección */
+          <div className="space-y-3">
+            <Label>Canción seleccionada ✓</Label>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-primary/30">
+              <img 
+                src={selectedTrack.coverUrl} 
+                alt={selectedTrack.title}
+                className="w-16 h-16 rounded object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground truncate">{selectedTrack.title}</p>
+                <p className="text-sm text-muted-foreground truncate">{selectedTrack.artist}</p>
+                <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded bg-primary/20 text-primary">
+                  {selectedTrack.type === 'album' ? '💿 Álbum' : '🎵 Canción'}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearSelection}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="message">Mensaje (opcional)</Label>
@@ -154,6 +288,77 @@ export function RecommendationForm() {
           )}
         </Button>
       </form>
+
+      {/* Modal de resultados de búsqueda */}
+      <Dialog open={showResults} onOpenChange={setShowResults}>
+        <DialogContent className="bg-card border-border max-w-5xl h-[80vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Seleccionar canción o álbum</DialogTitle>
+            <DialogDescription>
+              Elige la canción o álbum que quieres recomendar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* Scrollable Results Area */}
+          <div className="flex-1 overflow-y-auto pr-2">
+            {searchResults.filter(result => 
+              filterType === 'all' ? true : result.type === filterType
+            ).length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No hay resultados para este filtro</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {searchResults
+                  .filter(result => filterType === 'all' ? true : result.type === filterType)
+                  .map((result, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelectTrack(result)}
+                      className="group overflow-hidden rounded-lg bg-secondary hover:bg-secondary/80 transition-all text-left"
+                    >
+                      <div className="aspect-square overflow-hidden bg-muted relative">
+                        <img
+                          src={result.coverUrl}
+                          alt={result.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        {/* Badge de tipo */}
+                        <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-black/70 backdrop-blur-sm">
+                          <span className="text-xs text-white font-medium">
+                            {result.type === 'album' ? '💿 Álbum' : '🎵 Canción'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <p className="font-medium text-sm truncate text-foreground">
+                          {result.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {result.artist}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Load More Button - Fixed at bottom */}
+          {hasMoreResults && (
+            <div className="flex-shrink-0 mt-4 pt-4 border-t border-border">
+              <Button
+                onClick={handleLoadMore}
+                disabled={isSearching}
+                variant="outline"
+                className="w-full"
+              >
+                {isSearching ? 'Cargando...' : 'Cargar más resultados'}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

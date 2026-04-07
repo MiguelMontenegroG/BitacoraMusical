@@ -218,7 +218,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
           
           {/* Filtros de tipo */}
           <div className="flex gap-2">
-            <Button
+            {/* <Button
               type="button"
               variant={filterType === 'all' ? 'default' : 'outline'}
               size="sm"
@@ -226,7 +226,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
               className="flex-1"
             >
               Todos
-            </Button>
+            </Button> */}
             <Button
               type="button"
               variant={filterType === 'album' ? 'default' : 'outline'}
@@ -234,7 +234,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
               onClick={() => setFilterType('album')}
               className="flex-1"
             >
-              💿 Álbumes
+               Álbumes
             </Button>
             <Button
               type="button"
@@ -243,7 +243,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
               onClick={() => setFilterType('song')}
               className="flex-1"
             >
-              🎵 Canciones
+               Canciones
             </Button>
           </div>
         </div>
@@ -252,9 +252,9 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
       <Dialog open={showResults} onOpenChange={setShowResults}>
         <DialogContent className="bg-card border-border max-w-5xl h-[80vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Search Results</DialogTitle>
+            <DialogTitle>Resultados de búsqueda</DialogTitle>
             <DialogDescription>
-              Select an album or song to add to your journal.
+              Selecciona un álbum o canción para agregar a tu bitácora.
             </DialogDescription>
           </DialogHeader>
           

@@ -40,7 +40,7 @@ export default function Home() {
           <div className="inline-block">
             <div className="h-12 w-12 rounded-full border-4 border-primary border-t-accent animate-spin"></div>
           </div>
-          <p className="text-muted-foreground">Loading Dashie's music blog...</p>
+          <p className="text-muted-foreground">Cargando Dashie's music blog...</p>
         </div>
       </div>
     );
@@ -67,14 +67,14 @@ export default function Home() {
                 </h2>
                 <p className="text-muted-foreground text-xs md:text-sm mt-1">
                   {activeTab === 'journal'
-                    ? 'Rate and reflect on your favorite music'
+                    ? 'Califica y reflexiona sobre tu música favorita'
                     : activeTab === 'albums'
-                    ? 'View and manage your album collection'
+                    ? 'Visualiza y gestiona tu colección de álbumes'
                     : activeTab === 'artists'
-                    ? 'Explore your favorite artists and their discography'
+                    ? 'Explora tus artistas favoritos y su discografía'
                     : activeTab === 'notifications'
-                    ? 'Check recommendations from your listeners'
-                    : 'Visualize your listening patterns and preferences'}
+                    ? 'Revisa las recomendaciones de tus oyentes'
+                    : 'Visualiza tus patrones y preferencias de escucha'}
                 </p>
               </div>
               

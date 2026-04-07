@@ -8,8 +8,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Dashie's music blog",
-  description: 'Rate and journal your favorite albums and songs',
-  generator: 'v0.app',
+  description: 'Blog de musica, aqui califico canciones por diversión sin intención de atacar a nadie ¡enviame una recomendación! ^^',
   icons: {
     icon: [
       {

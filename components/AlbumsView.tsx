@@ -69,8 +69,8 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <div className="text-muted-foreground text-center space-y-2">
           <Disc className="h-16 w-16 mx-auto opacity-50" />
-          <p className="text-xl">📀 No albums or EPs yet</p>
-          <p className="text-sm">Search for an album or EP and rate it to see it here!</p>
+          <p className="text-xl">📀 Aún no hay álbumes o EPs</p>
+          <p className="text-sm">¡Busca un álbum o EP y califícalo para verlo aquí!</p>
         </div>
       </div>
     );
@@ -145,7 +145,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {albumList.map((album) => {
           const stats = getAlbumStats(album);
           
@@ -153,7 +153,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
             <div
               key={album.id}
               onClick={() => handleOpenAlbum(album)}
-              className="group relative rounded-lg overflow-hidden bg-secondary border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
+              className="group relative rounded-xl overflow-hidden bg-secondary border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
             >
               {/* Cover Image */}
               <div className="aspect-square overflow-hidden bg-muted relative">
@@ -162,22 +162,23 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                   alt={album.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-medium">
-                    Ver Canciones
-                  </div>
+                {/* Overlay con botón de ver canciones */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                  <span className="text-white font-medium text-sm flex items-center gap-2">
+                    <Music className="h-4 w-4" />
+                    Ver canciones
+                  </span>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-3 space-y-2">
+              <div className="p-4 space-y-3">
                 {/* Title and Artist */}
                 <div>
-                  <p className="font-semibold text-sm text-foreground truncate">
+                  <p className="font-semibold text-base text-foreground truncate" title={album.title}>
                     {album.title}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-sm text-muted-foreground truncate" title={album.artist}>
                     {album.artist}
                   </p>
                 </div>
@@ -212,27 +213,27 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                 )}
 
                 {/* Album Rating */}
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-primary text-primary" />
-                  <span className="text-sm font-medium text-foreground">
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 fill-primary text-primary" />
+                  <span className="text-base font-bold text-foreground">
                     {album.rating.toFixed(1)}
                   </span>
-                  <span className="text-xs text-muted-foreground">/10</span>
+                  <span className="text-sm text-muted-foreground">/10</span>
                 </div>
 
                 {/* Songs Info */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Music className="h-3 w-3 text-muted-foreground" />
+                <div className="space-y-2 pt-1 border-t border-border/50">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Music className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">
                       {stats.ratedSongsCount} canciones calificadas
                     </span>
                   </div>
                   
                   {stats.averageRating !== null && (
-                    <div className="flex items-center gap-1 text-xs">
-                      <Star className="h-3 w-3 fill-accent text-accent" />
-                      <span className="text-accent font-medium">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Star className="h-4 w-4 fill-accent text-accent" />
+                      <span className="text-accent font-semibold">
                         Promedio: {stats.averageRating.toFixed(1)}/10
                       </span>
                     </div>
@@ -240,8 +241,8 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                 </div>
 
                 {/* Date */}
-                <p className="text-xs text-muted-foreground">
-                  {new Date(album.date).toLocaleDateString('en-US', {
+                <p className="text-xs text-muted-foreground pt-1">
+                  {new Date(album.date).toLocaleDateString('es-ES', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',

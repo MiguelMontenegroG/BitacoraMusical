@@ -7,8 +7,9 @@ import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { getAlbumDetails, AlbumDetails, AlbumTrack } from '@/lib/lastfm';
-import { Disc, Music, Star, Save, CheckCircle2, X, TrendingUp } from 'lucide-react';
+import { Disc, Music, Star, Save, CheckCircle2, X, TrendingUp, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateAlbumImage } from '@/lib/albumImageGenerator';
 import {
   LineChart,
   Line,
@@ -48,6 +49,7 @@ export function AlbumDetailsModal({
   const [albumRating, setAlbumRating] = useState<{ rating: string; review: string; tags: string[] } | null>(null);
   const [expandedTrack, setExpandedTrack] = useState<string | null>(null);
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({});
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (isOpen && album.title && album.artist) {
@@ -203,6 +205,63 @@ export function AlbumDetailsModal({
     });
   };
 
+  const handleDownloadSummary = async () => {
+    if (!details) return;
+    
+    setIsDownloading(true);
+    
+    try {
+      // Obtener SOLO las canciones de ESTE álbum específico
+      // Filtramos por nombre de track que coincida con las del álbum actual
+      const albumTrackNames = details.tracks.map(track => track.name.toLowerCase());
+      
+      // Primero filtramos las canciones que pertenecen a este álbum
+      const filteredSongs = existingEntries.filter(e => {
+        return e.type === 'song' && 
+               e.artist === album.artist && 
+               albumTrackNames.includes(e.title.toLowerCase());
+      });
+      
+      // Luego las ORDENAMOS según el orden de tracks del álbum (de Last.fm)
+      const albumSongs = details.tracks
+        .map((track, index) => {
+          const song = filteredSongs.find(s => s.title.toLowerCase() === track.name.toLowerCase());
+          return song ? { title: song.title, rating: song.rating, trackNumber: index + 1 } : null;
+        })
+        .filter((song): song is { title: string; rating: number; trackNumber: number } => song !== null);
+
+      // Generar imagen
+      const blob = await generateAlbumImage(
+        {
+          title: album.title,
+          artist: album.artist,
+          coverUrl: album.coverUrl,
+          rating: albumRating ? parseFloat(albumRating.rating) : 0,
+          date: new Date().toISOString(),
+        },
+        albumSongs,
+        existingEntries.filter(e => e.artist === album.artist)
+      );
+
+      // Descargar imagen
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${album.title} - ${album.artist}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('¡Imagen descargada exitosamente! 📸');
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast.error('Error al descargar la imagen. Intenta de nuevo.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleRatingInputChange = (
     trackName: string | 'album',
     e: React.ChangeEvent<HTMLInputElement>
@@ -335,11 +394,23 @@ export function AlbumDetailsModal({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="bg-card border-border max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Album Details</DialogTitle>
-            <DialogDescription>
-              View tracks and rate this album or individual songs
-            </DialogDescription>
+          <DialogHeader className="flex-shrink-0 flex flex-row items-center justify-between">
+            <div>
+              <DialogTitle>Detalles del álbum</DialogTitle>
+              <DialogDescription>
+                Visualiza las canciones y califica este álbum o canciones individuales
+              </DialogDescription>
+            </div>
+            <Button
+              onClick={handleDownloadSummary}
+              disabled={isDownloading || !details}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {isDownloading ? 'Generando...' : 'Descargar Resumen'}
+            </Button>
           </DialogHeader>
 
           {isLoading ? (
@@ -348,7 +419,7 @@ export function AlbumDetailsModal({
                 <div className="inline-block">
                   <div className="h-8 w-8 rounded-full border-4 border-primary border-t-accent animate-spin"></div>
                 </div>
-                <p className="text-muted-foreground">Loading album details...</p>
+                <p className="text-muted-foreground">Cargando detalles del álbum...</p>
               </div>
             </div>
           ) : details ? (
