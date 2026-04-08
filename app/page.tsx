@@ -67,7 +67,7 @@ export default function Home() {
                 </h2>
                 <p className="text-muted-foreground text-xs md:text-sm mt-1">
                   {activeTab === 'journal'
-                    ? 'Califica y reflexiona sobre tu música favorita'
+                    ? 'Mis ultimas calificaciones ^^'
                     : activeTab === 'albums'
                     ? 'Visualiza y gestiona tu colección de álbumes'
                     : activeTab === 'artists'
@@ -113,7 +113,7 @@ export default function Home() {
                     }
                   }}
                 >
-                  🎵 Recomendar canción
+                  Recomendar canción
                 </Button>
               </div>
             )}

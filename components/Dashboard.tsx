@@ -94,7 +94,24 @@ export function Dashboard({ entries }: DashboardProps) {
   const getTopArtists = (): ArtistData[] => {
     const artistStats: Record<string, { count: number; totalRating: number }> = {};
     
+    // Agrupar entradas por título+artista para evitar contar duplicados
+    const uniqueEntriesMap = new Map<string, MusicEntry>();
     entries.forEach((entry) => {
+      const key = `${entry.title}|||${entry.artist}`;
+      if (!uniqueEntriesMap.has(key)) {
+        uniqueEntriesMap.set(key, entry);
+      } else {
+        // Mantener la calificación más alta
+        const existing = uniqueEntriesMap.get(key)!;
+        if (entry.rating > existing.rating) {
+          uniqueEntriesMap.set(key, entry);
+        }
+      }
+    });
+    
+    const uniqueEntries = Array.from(uniqueEntriesMap.values());
+    
+    uniqueEntries.forEach((entry) => {
       if (!artistStats[entry.artist]) {
         artistStats[entry.artist] = { count: 0, totalRating: 0 };
       }
@@ -115,7 +132,23 @@ export function Dashboard({ entries }: DashboardProps) {
   const getTopTags = (): TagData[] => {
     const tagCounts: Record<string, number> = {};
     
+    // Agrupar entradas por título+artista para evitar contar duplicados
+    const uniqueEntriesMap = new Map<string, MusicEntry>();
     entries.forEach((entry) => {
+      const key = `${entry.title}|||${entry.artist}`;
+      if (!uniqueEntriesMap.has(key)) {
+        uniqueEntriesMap.set(key, entry);
+      } else {
+        const existing = uniqueEntriesMap.get(key)!;
+        if (entry.rating > existing.rating) {
+          uniqueEntriesMap.set(key, entry);
+        }
+      }
+    });
+    
+    const uniqueEntries = Array.from(uniqueEntriesMap.values());
+    
+    uniqueEntries.forEach((entry) => {
       if (entry.mood) {
         const tags = entry.mood.split(',').map((tag) => tag.trim()).filter(Boolean);
         tags.forEach((tag) => {
@@ -133,7 +166,23 @@ export function Dashboard({ entries }: DashboardProps) {
   const getMonthlyTrends = (): MonthlyData[] => {
     const monthlyStats: Record<string, { count: number; totalRating: number }> = {};
     
+    // Agrupar entradas por título+artista para evitar contar duplicados
+    const uniqueEntriesMap = new Map<string, MusicEntry>();
     entries.forEach((entry) => {
+      const key = `${entry.title}|||${entry.artist}`;
+      if (!uniqueEntriesMap.has(key)) {
+        uniqueEntriesMap.set(key, entry);
+      } else {
+        const existing = uniqueEntriesMap.get(key)!;
+        if (entry.rating > existing.rating) {
+          uniqueEntriesMap.set(key, entry);
+        }
+      }
+    });
+    
+    const uniqueEntries = Array.from(uniqueEntriesMap.values());
+    
+    uniqueEntries.forEach((entry) => {
       const date = new Date(entry.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
@@ -164,9 +213,10 @@ export function Dashboard({ entries }: DashboardProps) {
   };
 
   const getRatingByType = (): TypeRatingData[] => {
-    const albumEntries = entries.filter((e) => e.type === 'album');
-    const epEntries = entries.filter((e) => e.type === 'ep');
-    const songEntries = entries.filter((e) => e.type === 'song');
+    // Usar uniqueEntries para evitar duplicados
+    const albumEntries = uniqueEntries.filter((e) => e.type === 'album');
+    const epEntries = uniqueEntries.filter((e) => e.type === 'ep');
+    const songEntries = uniqueEntries.filter((e) => e.type === 'song');
 
     const albumAvg = albumEntries.length > 0
       ? Math.round((albumEntries.reduce((sum, e) => sum + e.rating, 0) / albumEntries.length) * 10) / 10
@@ -255,8 +305,24 @@ export function Dashboard({ entries }: DashboardProps) {
     // Filtrar solo canciones (type === 'song')
     const songEntries = entries.filter((e) => e.type === 'song');
     
-    // Ordenar por rating (mayor a menor)
-    return songEntries
+    // Agrupar por título y artista para evitar duplicados
+    const songMap = new Map<string, typeof songEntries[0]>();
+    
+    songEntries.forEach((entry) => {
+      const key = `${entry.title}|||${entry.artist}`;
+      
+      if (!songMap.has(key)) {
+        songMap.set(key, entry);
+      } else {
+        const existing = songMap.get(key)!;
+        // Mantener la calificación más alta
+        if (entry.rating > existing.rating) {
+          songMap.set(key, entry);
+        }
+      }
+    });
+    
+    return Array.from(songMap.values())
       .sort((a, b) => b.rating - a.rating)
       .map((song) => ({
         id: song.id,
@@ -268,19 +334,34 @@ export function Dashboard({ entries }: DashboardProps) {
       }));
   };
 
-  const avgRating = entries.length > 0
-    ? Math.round((entries.reduce((sum, e) => sum + e.rating, 0) / entries.length) * 10) / 10
+  // Agrupar entradas únicas por título+artista para estadísticas generales
+  const uniqueEntriesMap = new Map<string, MusicEntry>();
+  entries.forEach((entry) => {
+    const key = `${entry.title}|||${entry.artist}`;
+    if (!uniqueEntriesMap.has(key)) {
+      uniqueEntriesMap.set(key, entry);
+    } else {
+      const existing = uniqueEntriesMap.get(key)!;
+      if (entry.rating > existing.rating) {
+        uniqueEntriesMap.set(key, entry);
+      }
+    }
+  });
+  const uniqueEntries = Array.from(uniqueEntriesMap.values());
+
+  const avgRating = uniqueEntries.length > 0
+    ? Math.round((uniqueEntries.reduce((sum, e) => sum + e.rating, 0) / uniqueEntries.length) * 10) / 10
     : 0;
   
-  const highestRating = entries.length > 0 ? Math.max(...entries.map((e) => e.rating)) : 0;
-  const lowestRating = entries.length > 0 ? Math.min(...entries.map((e) => e.rating)) : 0;
-  const totalEntries = entries.length;
-  const uniqueArtists = new Set(entries.map((e) => e.artist)).size;
+  const highestRating = uniqueEntries.length > 0 ? Math.max(...uniqueEntries.map((e) => e.rating)) : 0;
+  const lowestRating = uniqueEntries.length > 0 ? Math.min(...uniqueEntries.map((e) => e.rating)) : 0;
+  const totalEntries = uniqueEntries.length;
+  const uniqueArtists = new Set(uniqueEntries.map((e) => e.artist)).size;
   
   const calculateTrend = () => {
-    if (entries.length < 2) return { direction: 'neutral', value: 0 };
+    if (uniqueEntries.length < 2) return { direction: 'neutral', value: 0 };
     
-    const sorted = [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sorted = [...uniqueEntries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const midPoint = Math.floor(sorted.length / 2);
     
     const firstHalf = sorted.slice(0, midPoint);

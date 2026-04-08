@@ -77,9 +77,8 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
           </nav>
 
           {/* Footer Info */}
-          <div className="p-6 border-t border-sidebar-border bg-gradient-to-r from-sidebar-primary/5 to-transparent text-xs text-sidebar-accent-foreground space-y-1">
+          <div className="p-6 border-t border-sidebar-border bg-gradient-to-r from-sidebar-primary/5 to-transparent text-xs text-sidebar-accent-foreground">
             <p className="flex items-center gap-2"><span className="animate-bounce">✨</span> Your music journey</p>
-            <p className="flex items-center gap-2"><span>💿</span> Albums & 🎵 Songs</p>
           </div>
         </div>
       </aside>

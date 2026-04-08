@@ -61,34 +61,90 @@ export function useMusicJournal() {
     }
 
     try {
-      // Preparar datos para insertar (ahora 'ep' es válido)
-      const insertData: any = {
+      console.log('🔍 Buscando entrada existente:', { title: entry.title, artist: entry.artist, type: entry.type });
+
+      // Buscar si ya existe una entrada con el mismo título, artista y tipo
+      const { data: existingEntries, error: searchError } = await supabase
+        .from('music_entries')
+        .select('*')
+        .eq('title', entry.title)
+        .eq('artist', entry.artist)
+        .eq('type', entry.type);
+
+      if (searchError) {
+        console.error('❌ Error buscando entrada existente:', searchError);
+        throw new Error(`Error buscando entrada: ${searchError.message}`);
+      }
+
+      // Preparar datos comunes
+      const commonData: any = {
         title: entry.title,
         artist: entry.artist,
         cover_url: entry.coverUrl,
         rating: entry.rating,
         review: entry.review,
-        type: entry.type, // 'album', 'song', o 'ep'
+        type: entry.type,
         mood: entry.mood,
       };
 
       // Solo agregar track_count si existe
       if (entry.trackCount !== undefined) {
-        insertData.track_count = entry.trackCount;
+        commonData.track_count = entry.trackCount;
       }
 
-      console.log('📤 Attempting to insert entry:', insertData);
+      // Si existe al menos una entrada, actualizar la más reciente
+      if (existingEntries && existingEntries.length > 0) {
+        const existingEntry = existingEntries[0];
+        console.log('✅ Entrada existente encontrada, actualizando:', existingEntry.id);
+
+        const { data: updatedData, error: updateError } = await supabase
+          .from('music_entries')
+          .update(commonData)
+          .eq('id', existingEntry.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('❌ Supabase update error:', updateError);
+          console.error('❌ Error details:', JSON.stringify(updateError, null, 2));
+          throw new Error(`Supabase update error: ${updateError.message || 'Unknown error'}`);
+        }
+
+        console.log('✅ Entry updated successfully:', updatedData);
+
+        const updatedEntry: MusicEntry = {
+          id: updatedData.id,
+          title: updatedData.title,
+          artist: updatedData.artist,
+          coverUrl: updatedData.cover_url || '',
+          rating: Number(updatedData.rating),
+          review: updatedData.review || '',
+          date: updatedData.date,
+          type: updatedData.type || 'song',
+          mood: updatedData.mood || '',
+          trackCount: updatedData.track_count || undefined,
+        };
+
+        setEntries((prev) =>
+          prev.map((e) => (e.id === updatedEntry.id ? updatedEntry : e))
+        );
+        return updatedEntry;
+      }
+
+      // Si no existe, insertar nueva entrada
+      console.log('📤 No existe entrada previa, insertando nueva...');
+      console.log('📤 Datos a insertar:', commonData);
 
       const { data, error } = await supabase
         .from('music_entries')
-        .insert(insertData)
+        .insert(commonData)
         .select()
         .single();
 
       if (error) {
         console.error('❌ Supabase error:', error);
         console.error('❌ Error details:', JSON.stringify(error, null, 2));
-        console.error('❌ Data that failed:', insertData);
+        console.error('❌ Data that failed:', commonData);
         throw new Error(`Supabase error: ${error.message || 'Unknown error'}`);
       }
 
@@ -110,11 +166,11 @@ export function useMusicJournal() {
       setEntries((prev) => [newEntry, ...prev]);
       return newEntry;
     } catch (error) {
-      console.error('💥 Error adding entry:', error);
+      console.error('💥 Error adding/updating entry:', error);
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Unknown error adding entry');
+      throw new Error('Unknown error adding/updating entry');
     }
   }, [isAuthenticated]);
 
