@@ -131,9 +131,18 @@ export function RecommendationForm() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Error al enviar la recomendación. Intenta de nuevo.', {
-        duration: 5000,
-      });
+      
+      // Verificar si es error de rate limiting
+      if (error instanceof Error && error.message === 'RATE_LIMIT_EXCEEDED') {
+        toast.error('Límite de recomendaciones alcanzado', {
+          description: 'Se permiten máximo 7 recomendaciones por hora. Intenta más tarde.',
+          duration: 6000,
+        });
+      } else {
+        toast.error('Error al enviar la recomendación. Intenta de nuevo.', {
+          duration: 5000,
+        });
+      }
     } finally {
       setIsLoading(false);
     }

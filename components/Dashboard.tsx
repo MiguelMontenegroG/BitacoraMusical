@@ -163,6 +163,45 @@ export function Dashboard({ entries }: DashboardProps) {
       .slice(0, 8);
   };
 
+  const getTopRatedArtists = (): ArtistData[] => {
+    const artistStats: Record<string, { count: number; totalRating: number }> = {};
+    
+    // Agrupar entradas por título+artista para evitar contar duplicados
+    const uniqueEntriesMap = new Map<string, MusicEntry>();
+    entries.forEach((entry) => {
+      const key = `${entry.title}|||${entry.artist}`;
+      if (!uniqueEntriesMap.has(key)) {
+        uniqueEntriesMap.set(key, entry);
+      } else {
+        const existing = uniqueEntriesMap.get(key)!;
+        if (entry.rating > existing.rating) {
+          uniqueEntriesMap.set(key, entry);
+        }
+      }
+    });
+    
+    const uniqueEntries = Array.from(uniqueEntriesMap.values());
+    
+    uniqueEntries.forEach((entry) => {
+      if (!artistStats[entry.artist]) {
+        artistStats[entry.artist] = { count: 0, totalRating: 0 };
+      }
+      artistStats[entry.artist].count += 1;
+      artistStats[entry.artist].totalRating += entry.rating;
+    });
+
+    // Ordenar por rating promedio (mayor a menor), filtrar mínimo 10 entradas
+    return Object.entries(artistStats)
+      .map(([artist, stats]) => ({
+        artist,
+        count: stats.count,
+        averageRating: Math.round((stats.totalRating / stats.count) * 10) / 10,
+      }))
+      .filter((artist) => artist.count >= 10)
+      .sort((a, b) => b.averageRating - a.averageRating)
+      .slice(0, 5);
+  };
+
   const getMonthlyTrends = (): MonthlyData[] => {
     const monthlyStats: Record<string, { count: number; totalRating: number }> = {};
     
@@ -382,6 +421,7 @@ export function Dashboard({ entries }: DashboardProps) {
   const ratingRangeData = getRatingDistributionByRange();
   const topArtists = getTopArtists();
   const topTags = getTopTags();
+  const topRatedArtists = getTopRatedArtists();
   const monthlyTrends = getMonthlyTrends();
   const ratingByType = getRatingByType();
   const allAlbums = getAllAlbums();
@@ -462,7 +502,7 @@ export function Dashboard({ entries }: DashboardProps) {
         </Card>
 
         <Card className="bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border-border/50 p-6 hover:shadow-lg transition-all duration-300">
-          <h3 className="text-lg font-semibold text-foreground mb-2">Top 5 Artistas</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Top 5 Artistas más escuchados</h3>
           <p className="text-xs text-muted-foreground mb-4">Más escuchados con rating promedio</p>
           {topArtists.length > 0 ? (
             <div className="space-y-3">
@@ -594,26 +634,27 @@ export function Dashboard({ entries }: DashboardProps) {
           </Card>
 
           <Card className="bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border-border/50 p-6 hover:shadow-lg transition-all duration-300">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Tags Populares</h3>
-            <p className="text-xs text-muted-foreground mb-4">Géneros y etiquetas más usadas</p>
-            {topTags.length > 0 ? (
-              <div className="space-y-2 max-h-[180px] overflow-y-auto">
-                {topTags.map((tagData, index) => {
-                  const maxCount = topTags[0].count;
-                  const percentage = (tagData.count / maxCount) * 100;
+            <h3 className="text-lg font-semibold text-foreground mb-2">Artistas mejor puntuados</h3>
+            <p className="text-xs text-muted-foreground mb-4">Top 5 con mayor rating promedio</p>
+            {topRatedArtists.length > 0 ? (
+              <div className="space-y-3">
+                {topRatedArtists.map((artist, index) => {
+                  const maxRating = topRatedArtists[0].averageRating;
+                  const percentage = (artist.averageRating / maxRating) * 100;
                   return (
-                    <div key={index} className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-foreground font-medium">{tagData.tag}</span>
-                        <span className="text-muted-foreground">{tagData.count}</span>
+                    <div key={artist.artist} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-foreground font-medium truncate" title={artist.artist}>
+                          {artist.artist}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {artist.count} entradas • {artist.averageRating.toFixed(1)}★
+                        </span>
                       </div>
                       <div className="h-2 bg-secondary rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${percentage}%`,
-                            backgroundColor: `var(--chart-${(index % 5) + 1})`,
-                          }}
+                          className="h-full rounded-full transition-all bg-accent"
+                          style={{ width: `${percentage}%` }}
                         />
                       </div>
                     </div>

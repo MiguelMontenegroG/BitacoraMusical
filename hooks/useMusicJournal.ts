@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { logger } from '@/lib/logger';
 
 export interface MusicEntry {
   id: string;
@@ -61,7 +62,7 @@ export function useMusicJournal() {
     }
 
     try {
-      console.log('🔍 Buscando entrada existente:', { title: entry.title, artist: entry.artist, type: entry.type });
+      logger.log('🔍 Buscando entrada existente:', { title: entry.title, artist: entry.artist, type: entry.type });
 
       // Buscar si ya existe una entrada con el mismo título, artista y tipo
       const { data: existingEntries, error: searchError } = await supabase
@@ -72,7 +73,7 @@ export function useMusicJournal() {
         .eq('type', entry.type);
 
       if (searchError) {
-        console.error('❌ Error buscando entrada existente:', searchError);
+        logger.error('Error buscando entrada existente:', searchError);
         throw new Error(`Error buscando entrada: ${searchError.message}`);
       }
 
@@ -95,7 +96,7 @@ export function useMusicJournal() {
       // Si existe al menos una entrada, actualizar la más reciente
       if (existingEntries && existingEntries.length > 0) {
         const existingEntry = existingEntries[0];
-        console.log('✅ Entrada existente encontrada, actualizando:', existingEntry.id);
+        logger.log('✅ Entrada existente encontrada, actualizando:', existingEntry.id);
 
         const { data: updatedData, error: updateError } = await supabase
           .from('music_entries')
@@ -105,12 +106,11 @@ export function useMusicJournal() {
           .single();
 
         if (updateError) {
-          console.error('❌ Supabase update error:', updateError);
-          console.error('❌ Error details:', JSON.stringify(updateError, null, 2));
+          logger.error('Supabase update error:', updateError);
           throw new Error(`Supabase update error: ${updateError.message || 'Unknown error'}`);
         }
 
-        console.log('✅ Entry updated successfully:', updatedData);
+        logger.log('✅ Entry updated successfully');
 
         const updatedEntry: MusicEntry = {
           id: updatedData.id,
@@ -132,8 +132,7 @@ export function useMusicJournal() {
       }
 
       // Si no existe, insertar nueva entrada
-      console.log('📤 No existe entrada previa, insertando nueva...');
-      console.log('📤 Datos a insertar:', commonData);
+      logger.log('📤 No existe entrada previa, insertando nueva...');
 
       const { data, error } = await supabase
         .from('music_entries')
@@ -142,13 +141,11 @@ export function useMusicJournal() {
         .single();
 
       if (error) {
-        console.error('❌ Supabase error:', error);
-        console.error('❌ Error details:', JSON.stringify(error, null, 2));
-        console.error('❌ Data that failed:', commonData);
+        logger.error('Supabase error:', error);
         throw new Error(`Supabase error: ${error.message || 'Unknown error'}`);
       }
 
-      console.log('✅ Entry inserted successfully:', data);
+      logger.log('✅ Entry inserted successfully');
 
       const newEntry: MusicEntry = {
         id: data.id,
@@ -166,7 +163,7 @@ export function useMusicJournal() {
       setEntries((prev) => [newEntry, ...prev]);
       return newEntry;
     } catch (error) {
-      console.error('💥 Error adding/updating entry:', error);
+      logger.error('Error adding/updating entry:', error);
       if (error instanceof Error) {
         throw error;
       }
@@ -192,7 +189,7 @@ export function useMusicJournal() {
       if (updates.mood !== undefined) updateData.mood = updates.mood;
       if (updates.trackCount !== undefined) updateData.track_count = updates.trackCount;
 
-      console.log('📤 Attempting to update entry:', id, updateData);
+      logger.log('📤 Attempting to update entry:', id);
 
       const { error } = await supabase
         .from('music_entries')
@@ -200,19 +197,17 @@ export function useMusicJournal() {
         .eq('id', id);
 
       if (error) {
-        console.error('❌ Supabase update error:', error);
-        console.error('❌ Error details:', JSON.stringify(error, null, 2));
-        console.error('❌ Data that failed:', updateData);
+        logger.error('Supabase update error:', error);
         throw new Error(`Supabase update error: ${error.message || 'Unknown error'}`);
       }
 
-      console.log('✅ Entry updated successfully');
+      logger.log('✅ Entry updated successfully');
 
       setEntries((prev) =>
         prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
       );
     } catch (error) {
-      console.error('💥 Error updating entry:', error);
+      logger.error('Error updating entry:', error);
       if (error instanceof Error) {
         throw error;
       }

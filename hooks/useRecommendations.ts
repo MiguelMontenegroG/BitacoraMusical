@@ -36,7 +36,7 @@ export function useRecommendations() {
     }
   }, []);
 
-  // Enviar recomendación (público)
+  // Enviar recomendación (público) con rate limiting
   const submitRecommendation = async (data: {
     title: string;
     artist: string;
@@ -45,6 +45,25 @@ export function useRecommendations() {
     is_anonymous: boolean;
   }) => {
     try {
+      // Rate limiting: verificar cuántas recomendaciones se han enviado en la última hora
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      
+      const { count, error: countError } = await supabase
+        .from('recommendations')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', oneHourAgo);
+
+      if (countError) {
+        console.error('Error checking rate limit:', countError);
+        throw new Error('Error al verificar límite de recomendaciones');
+      }
+
+      // Límite: 7 recomendaciones por hora
+      if (count && count >= 7) {
+        throw new Error('RATE_LIMIT_EXCEEDED');
+      }
+
+      // Si está dentro del límite, insertar la recomendación
       const { error } = await supabase.from('recommendations').insert({
         title: data.title,
         artist: data.artist,

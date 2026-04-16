@@ -10,6 +10,7 @@ import { getAlbumDetails, AlbumDetails, AlbumTrack } from '@/lib/lastfm';
 import { Disc, Music, Star, Save, CheckCircle2, X, TrendingUp, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateAlbumImage } from '@/lib/albumImageGenerator';
+import { logger } from '@/lib/logger';
 import {
   LineChart,
   Line,
@@ -325,7 +326,7 @@ export function AlbumDetailsModal({
       ? Math.round((artistEntries.reduce((sum, e) => sum + e.rating, 0) / artistEntries.length) * 10) / 10
       : 0;
 
-    console.log('Chart Data:', { chartData, albumAvg, artistAvg, ratedTracksCount: ratedTracks.length });
+    logger.log('Chart Data:', { chartData, albumAvg, artistAvg, ratedTracksCount: ratedTracks.length });
 
     return { chartData, albumAvg, artistAvg };
   };
@@ -337,8 +338,7 @@ export function AlbumDetailsModal({
     const numRating = parseFloat(rating.rating);
     if (isNaN(numRating)) return;
     
-    console.log('💾 Intentando guardar canción:', track.name);
-    console.log('📊 Rating:', numRating);
+    logger.log('💾 Intentando guardar canción:', track.name);
     
     onSubmit({
       title: track.name,
@@ -352,7 +352,7 @@ export function AlbumDetailsModal({
     
     toast.success(`¡"${track.name}" guardada!`);
     setExpandedTrack(null);
-    console.log('✅ Canción guardada, expandedTrack limpiado, modal debería seguir abierto');
+    logger.log('✅ Canción guardada, expandedTrack limpiado');
   };
 
   const formatDuration = (seconds: number) => {

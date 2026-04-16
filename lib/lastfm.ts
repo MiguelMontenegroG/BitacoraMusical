@@ -1,5 +1,6 @@
 const API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 const BASE_URL = 'https://ws.audioscrobbler.com/2.0/';
+import { logger } from './logger';
 
 export interface LastFmTrack {
   name: string;
@@ -122,7 +123,7 @@ export async function searchTracks(query: string, page: number = 1): Promise<Sea
             }
           } catch (error) {
             // Si falla, mantener el placeholder
-            console.warn(`Could not fetch track info for ${track.name}`);
+            logger.warn(`Could not fetch track info for ${track.name}`);
           }
         }
         

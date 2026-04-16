@@ -10,6 +10,7 @@ import { AlbumDetailsModal } from './AlbumDetailsModal';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { toast } from 'sonner';
 import { searchMusic, SearchResult, searchAlbums } from '@/lib/lastfm';
+import { logger } from '@/lib/logger';
 
 interface SearchBarProps {
   onAddEntry: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
@@ -131,7 +132,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
 
   // Handler especial para canciones dentro del AlbumDetailsModal (no cierra el modal)
   const handleAddTrackFromAlbum = async (entry: Omit<MusicEntry, 'id' | 'date'>) => {
-    console.log('🎵 Guardando canción desde álbum:', entry.title);
+    logger.log('🎵 Guardando canción desde álbum:', entry.title);
     try {
       const result = await onAddEntry(entry);
       
@@ -140,7 +141,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
         return;
       }
       
-      console.log('✅ Canción guardada correctamente, modal permanece abierto');
+      logger.log('✅ Canción guardada correctamente, modal permanece abierto');
       toast.success('¡Canción guardada!');
     } catch (error) {
       console.error('❌ Error adding track:', error);
