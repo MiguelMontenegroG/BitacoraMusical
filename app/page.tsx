@@ -51,7 +51,7 @@ export default function Home() {
   return (
     <div className="flex flex-col md:flex-row h-screen bg-background">
       {/* Sidebar */}
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} unreadCount={unreadCount} />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} unreadCount={unreadCount} isAuthenticated={!!user} />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-16 md:pb-0">

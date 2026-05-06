@@ -7,9 +7,10 @@ interface SidebarProps {
   activeTab: 'journal' | 'albums' | 'artists' | 'stats' | 'notifications' | 'playlists' | 'myblog';
   onTabChange: (tab: 'journal' | 'albums' | 'artists' | 'stats' | 'notifications' | 'playlists' | 'myblog') => void;
   unreadCount?: number;
+  isAuthenticated?: boolean;
 }
 
-export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, unreadCount = 0, isAuthenticated = false }: SidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
@@ -69,19 +70,21 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
               <BarChart3 className="h-4 w-4" />
               <span>Statistics</span>
             </Button>
-            <Button
-              variant={activeTab === 'notifications' ? 'default' : 'ghost'}
-              className="w-full justify-start gap-3 relative transition-all duration-200 hover:scale-105"
-              onClick={() => onTabChange('notifications')}
-            >
-              <Bell className="h-4 w-4" />
-              <span>Notifications</span>
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-in zoom-in">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </Button>
+            {isAuthenticated && (
+              <Button
+                variant={activeTab === 'notifications' ? 'default' : 'ghost'}
+                className="w-full justify-start gap-3 relative transition-all duration-200 hover:scale-105"
+                onClick={() => onTabChange('notifications')}
+              >
+                <Bell className="h-4 w-4" />
+                <span>Notifications</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-in zoom-in">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+            )}
             <Button
               variant={activeTab === 'myblog' ? 'default' : 'ghost'}
               className="w-full justify-start gap-3 transition-all duration-200 hover:scale-105"
@@ -101,7 +104,7 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-bottom">
-        <div className="grid grid-cols-7 gap-1 p-2">
+        <div className="grid gap-1 p-2" style={{ gridTemplateColumns: `repeat(${isAuthenticated ? 7 : 6}, 1fr)` }}>
           <button
             onClick={() => onTabChange('journal')}
             className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors ${
@@ -147,20 +150,22 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
             <BarChart3 className="h-5 w-5" />
             <span className="text-[10px] mt-1 font-medium">Stats</span>
           </button>
-          <button
-            onClick={() => onTabChange('notifications')}
-            className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors relative ${
-              activeTab === 'notifications' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
-            }`}
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-            <span className="text-[10px] mt-1 font-medium">Alerts</span>
-          </button>
+          {isAuthenticated && (
+            <button
+              onClick={() => onTabChange('notifications')}
+              className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors relative ${
+                activeTab === 'notifications' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+              }`}
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+              <span className="text-[10px] mt-1 font-medium">Alerts</span>
+            </button>
+          )}
           <button
             onClick={() => onTabChange('myblog')}
             className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors ${
