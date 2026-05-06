@@ -81,7 +81,7 @@ function PlaylistsContent({
 
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {filteredPlaylists.map((playlist) => (
           <Card
             key={playlist.id}
@@ -101,33 +101,33 @@ function PlaylistsContent({
               </div>
             </div>
 
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start justify-between">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground truncate" title={playlist.name}>
+                  <h3 className="font-semibold text-sm md:text-base text-foreground truncate" title={playlist.name}>
                     {playlist.name}
                   </h3>
                   {playlist.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                       {playlist.description}
                     </p>
                   )}
                 </div>
                 {!playlist.is_public && (
-                  <EyeOff className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                  <EyeOff className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                <Badge variant="outline" className="text-xs">
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
+                <Badge variant="outline" className="text-[10px] md:text-xs px-1.5 md:px-2 py-0 md:py-0.5 h-auto">
                   {playlist.song_count || 0} canciones
                 </Badge>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="text-[10px] md:text-xs text-muted-foreground">
                   {new Date(playlist.updated_at).toLocaleDateString('es-ES', {
                     month: 'short',
                     day: 'numeric',
                   })}
-                </div>
+                </span>
               </div>
             </CardContent>
 
@@ -165,62 +165,63 @@ function PlaylistsContent({
 
   // List View
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {filteredPlaylists.map((playlist) => (
         <div
           key={playlist.id}
-          className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer group"
+          className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer group"
           onClick={() => handlePlaylistClick(playlist)}
         >
-          <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
+          <div className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 rounded-lg overflow-hidden">
             <SimplePlaylistCover
               playlist={playlist}
               alt={playlist.name}
-              size={64}
               className="w-full h-full"
             />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
+              <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{playlist.name}</h3>
               {!playlist.is_public && (
-                <EyeOff className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <EyeOff className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
               )}
             </div>
             {playlist.description && (
-              <p className="text-sm text-muted-foreground truncate mt-1">{playlist.description}</p>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{playlist.description}</p>
             )}
-            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 mt-1 text-[10px] md:text-xs text-muted-foreground">
               <span>{playlist.song_count || 0} canciones</span>
-              <span>&bull;</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
               <span>
-                Actualizada {new Date(playlist.updated_at).toLocaleDateString('es-ES')}
+                {new Date(playlist.updated_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="icon"
+              className="h-8 w-8"
               onClick={(e) => {
                 e.stopPropagation();
                 handlePlaylistClick(playlist);
               }}
             >
-              <Eye className="h-4 w-4" />
+              <Eye className="h-3.5 w-3.5" />
             </Button>
             {handleDeletePlaylist && (
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-8 w-8"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDeletePlaylist(playlist.id, playlist.name);
                 }}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
@@ -343,10 +344,8 @@ export function PlaylistsView() {
   if (isLoading) return <GridSkeleton />;
 
   return (
-    <div className="space-y-6">
-      {/* Header sin subtitulo duplicado */}
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground"></h2>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex justify-end">
         <Button onClick={() => setShowCreateModal(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Nueva Playlist
@@ -383,42 +382,6 @@ export function PlaylistsView() {
         showCreateButton={true}
         onCreateClick={() => setShowCreateModal(true)}
       />
-
-      {/* Stats */}
-      {filteredPlaylists.length > 0 && (
-        <div className="pt-6 border-t border-border/50">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-foreground">{playlists.length}</p>
-                  <p className="text-sm text-muted-foreground">Playlists totales</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-foreground">
-                    {playlists.reduce((sum, p) => sum + (p.song_count || 0), 0)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Canciones en total</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-foreground">
-                    {playlists.filter((p) => !p.is_public).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Playlists privadas</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
 
       <CreatePlaylistModal
         isOpen={showCreateModal}

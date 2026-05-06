@@ -9,7 +9,6 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { toast } from 'sonner';
@@ -284,7 +283,7 @@ export default function PlaylistDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-3 md:p-6">
         <DialogHeader>
           <DialogTitle className="sr-only">
             {isEditing ? 'Editando playlist' : `Detalles de playlist: ${playlistDetails.name}`}
@@ -292,8 +291,8 @@ export default function PlaylistDetailsModal({
           <DialogDescription className="sr-only">
             {isEditing ? 'Formulario para editar los detalles de la playlist' : `Informacion detallada de la playlist ${playlistDetails.name}`}
           </DialogDescription>
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
               {isEditing ? (
                 <div className="space-y-4">
                   <h2 className="text-sm font-medium text-muted-foreground mb-2">Editando playlist</h2>
@@ -314,73 +313,54 @@ export default function PlaylistDetailsModal({
                 </div>
               ) : (
                 <>
-                  <h2 className="text-2xl font-bold text-foreground">{playlistDetails.name}</h2>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <h2 className="text-lg md:text-2xl font-bold text-foreground truncate">{playlistDetails.name}</h2>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2 line-clamp-2">
                     {playlistDetails.description || 'Sin descripcion'}
                   </p>
                 </>
               )}
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 pr-10 md:pr-12">
               {!isEditing && (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-7 w-7 md:h-9 md:w-9"
                     onClick={() => setIsEditing(true)}
                     title="Editar playlist"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-7 w-7 md:h-9 md:w-9"
                     onClick={handleDelete}
                     title="Eliminar playlist"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </Button>
                 </>
               )}
               {!playlistDetails.is_public && (
-                <EyeOff className="h-4 w-4 text-muted-foreground" title="Privada" />
+                <EyeOff className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" title="Privada" />
               )}
             </div>
           </div>
         </DialogHeader>
 
-        {/* Playlist Info */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-foreground">{playlistItems.length}</p>
-                <p className="text-sm text-muted-foreground">Canciones</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-foreground">
-                  {playlistDetails.is_public ? 'Publica' : 'Privada'}
-                </p>
-                <p className="text-sm text-muted-foreground">Visibilidad</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-foreground">
-                  {new Date(playlistDetails.updated_at).toLocaleDateString('es-ES')}
-                </p>
-                <p className="text-sm text-muted-foreground">Ultima actualizacion</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Mini info compacta al lado del titulo */}
+        {!isEditing && (
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4 pb-3 border-b border-border/50">
+            <span className="font-medium text-foreground">{playlistItems.length} canciones</span>
+            <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
+            <span>{playlistDetails.is_public ? 'Publica' : 'Privada'}</span>
+            <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
+            <span>Actualizada {new Date(playlistDetails.updated_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+          </div>
+        )}
 
         {/* Edit Controls */}
         {isEditing && (
@@ -423,23 +403,23 @@ export default function PlaylistDetailsModal({
         )}
 
         {/* Songs Management */}
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Canciones en la playlist</h3>
+            <h3 className="text-sm md:text-lg font-semibold">Canciones</h3>
             <Button
               variant="outline"
               size="sm"
+              className="h-7 md:h-9 text-xs md:text-sm gap-1 md:gap-2"
               onClick={() => setShowAddSongs(!showAddSongs)}
-              className="gap-2"
             >
-              {showAddSongs ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              {showAddSongs ? 'Cerrar' : 'Agregar canciones'}
+              {showAddSongs ? <X className="h-3 w-3 md:h-4 md:w-4" /> : <Plus className="h-3 w-3 md:h-4 md:w-4" />}
+              {showAddSongs ? 'Cerrar' : 'Agregar'}
             </Button>
           </div>
 
           {/* Add Songs Section */}
           {showAddSongs && (
-            <div className="space-y-4 p-4 border rounded-lg">
+            <div className="space-y-3 p-3 md:p-4 border rounded-lg">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -450,7 +430,7 @@ export default function PlaylistDetailsModal({
                 />
               </div>
               
-              <div className="max-h-60 overflow-y-auto space-y-2">
+              <div className="max-h-48 md:max-h-60 overflow-y-auto space-y-2">
                 {filteredSongs.length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">
                     {searchQuery ? 'No se encontraron canciones' : 'No hay canciones disponibles'}
@@ -459,24 +439,25 @@ export default function PlaylistDetailsModal({
                   filteredSongs.map((song) => (
                     <div
                       key={song.id}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-secondary/50"
+                      className="flex items-center justify-between p-2 md:p-3 rounded-lg border hover:bg-secondary/50"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
                         <img
                           src={song.coverUrl || '/placeholder.jpg'}
                           alt={song.title}
-                          className="w-10 h-10 rounded object-cover"
+                          className="w-8 h-8 md:w-10 md:h-10 rounded object-cover flex-shrink-0"
                           onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
                         />
-                        <div>
-                          <p className="font-medium text-sm">{song.title}</p>
-                          <p className="text-xs text-muted-foreground">{song.artist}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-xs md:text-sm truncate">{song.title}</p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground truncate">{song.artist}</p>
                         </div>
                       </div>
                       
                       <Button
                         variant={isSongInPlaylist(song.id) ? "secondary" : "default"}
                         size="sm"
+                        className="text-xs h-7 md:h-9 px-2 md:px-4 flex-shrink-0"
                         onClick={() => handleAddSong(song)}
                         disabled={isSongInPlaylist(song.id)}
                       >
@@ -491,23 +472,24 @@ export default function PlaylistDetailsModal({
 
           {/* Playlist Songs List */}
           {playlistItems.length === 0 ? (
-            <div className="text-center py-8 border rounded-lg">
-              <Music className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-foreground font-medium">Esta playlist esta vacia</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Agrega canciones para comenzar a escuchar
+            <div className="text-center py-4 md:py-8 border rounded-lg">
+              <Music className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground mx-auto mb-2 md:mb-3" />
+              <p className="text-sm md:text-base text-foreground font-medium">Esta playlist esta vacia</p>
+              <p className="text-[10px] md:text-sm text-muted-foreground mt-1">
+                Agrega canciones para comenzar
               </p>
               <Button
                 variant="outline"
-                className="mt-4 gap-2"
+                size="sm"
+                className="mt-3 md:mt-4 gap-1 md:gap-2 h-7 md:h-9 text-xs md:text-sm"
                 onClick={() => setShowAddSongs(true)}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3 w-3 md:h-4 md:w-4" />
                 Agregar primera cancion
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1 md:space-y-2">
               {playlistItems.map((item, index) => (
                 <div
                   key={item.id}
@@ -515,14 +497,14 @@ export default function PlaylistDetailsModal({
                   onDragStart={(e) => handleDragStart(e, item.id)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index + 1)}
-                  className={`flex items-center gap-3 p-3 rounded-lg border hover:bg-secondary/50 transition-colors ${
+                  className={`flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg border hover:bg-secondary/50 transition-colors ${
                     draggedItem === item.id ? 'opacity-50' : ''
                   }`}
                 >
-                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                  <GripVertical className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground cursor-move flex-shrink-0" />
 
-                  <div className="w-8 text-center">
-                    <span className="text-sm font-medium text-muted-foreground">
+                  <div className="w-5 md:w-8 text-center flex-shrink-0">
+                    <span className="text-[10px] md:text-sm font-medium text-muted-foreground">
                       {index + 1}
                     </span>
                   </div>
@@ -530,32 +512,33 @@ export default function PlaylistDetailsModal({
                   <img
                     src={item.song_cover_url || '/placeholder.jpg'}
                     alt={item.song_title}
-                    className="w-10 h-10 rounded object-cover"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded object-cover flex-shrink-0"
                     onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
                   />
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{item.song_title}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground truncate">{item.song_artist}</p>
+                    <p className="font-medium text-xs md:text-sm truncate">{item.song_title}</p>
+                    <div className="flex items-center gap-1 md:gap-2">
+                      <p className="text-[10px] md:text-xs text-muted-foreground truncate">{item.song_artist}</p>
                       {item.song_rating && (
-                        <Badge variant="outline" className="text-xs">
-                          {item.song_rating.toFixed(1)}/10
+                        <Badge variant="outline" className="text-[9px] md:text-xs px-1 md:px-2 py-0 md:py-0.5 h-auto">
+                          {item.song_rating.toFixed(1)}
                         </Badge>
                       )}
                     </div>
                     {item.notes && (
-                      <p className="text-xs text-muted-foreground mt-1">{item.notes}</p>
+                      <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 truncate">{item.notes}</p>
                     )}
                   </div>
 
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-7 w-7 md:h-9 md:w-9 flex-shrink-0"
                     onClick={() => handleRemoveSong(item.id, item.song_title || '')}
                     title="Eliminar de la playlist"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </div>
               ))}
@@ -565,8 +548,8 @@ export default function PlaylistDetailsModal({
 
         <DialogFooter>
           <div className="flex w-full items-center justify-between">
-            <p className="text-sm text-muted-foreground">Arrastra y suelta para reordenar las canciones</p>
-            <Button variant="outline" onClick={onClose}>
+            <p className="text-[10px] md:text-sm text-muted-foreground">Arrastra para reordenar</p>
+            <Button variant="outline" size="sm" className="h-7 md:h-9 text-xs md:text-sm" onClick={onClose}>
               Cerrar
             </Button>
           </div>
