@@ -16,6 +16,8 @@ const nextConfig = {
     // Configuración adicional si es necesario
     return config;
   },
+  // Configuración de Turbopack (vacía para silenciar el error de build)
+  turbopack: {},
 }
 
 export default nextConfig
