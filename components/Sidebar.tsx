@@ -1,11 +1,11 @@
 'use client';
 
-import { Music, BarChart3, Disc, Users, Bell } from 'lucide-react';
+import { Music, BarChart3, Disc, Users, Bell, ListMusic, BookOpen } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface SidebarProps {
-  activeTab: 'journal' | 'albums' | 'artists' | 'stats' | 'notifications';
-  onTabChange: (tab: 'journal' | 'albums' | 'artists' | 'stats' | 'notifications') => void;
+  activeTab: 'journal' | 'albums' | 'artists' | 'stats' | 'notifications' | 'playlists' | 'myblog';
+  onTabChange: (tab: 'journal' | 'albums' | 'artists' | 'stats' | 'notifications' | 'playlists' | 'myblog') => void;
   unreadCount?: number;
 }
 
@@ -54,6 +54,14 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
               <span>Artists</span>
             </Button>
             <Button
+              variant={activeTab === 'playlists' ? 'default' : 'ghost'}
+              className="w-full justify-start gap-3 transition-all duration-200 hover:scale-105"
+              onClick={() => onTabChange('playlists')}
+            >
+              <ListMusic className="h-4 w-4" />
+              <span>Playlists</span>
+            </Button>
+            <Button
               variant={activeTab === 'stats' ? 'default' : 'ghost'}
               className="w-full justify-start gap-3 transition-all duration-200 hover:scale-105"
               onClick={() => onTabChange('stats')}
@@ -74,6 +82,14 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
                 </span>
               )}
             </Button>
+            <Button
+              variant={activeTab === 'myblog' ? 'default' : 'ghost'}
+              className="w-full justify-start gap-3 transition-all duration-200 hover:scale-105"
+              onClick={() => onTabChange('myblog')}
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>MyBlog</span>
+            </Button>
           </nav>
 
           {/* Footer Info */}
@@ -85,7 +101,7 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-bottom">
-        <div className="grid grid-cols-5 gap-1 p-2">
+        <div className="grid grid-cols-7 gap-1 p-2">
           <button
             onClick={() => onTabChange('journal')}
             className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors ${
@@ -114,6 +130,15 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
             <span className="text-[10px] mt-1 font-medium">Artists</span>
           </button>
           <button
+            onClick={() => onTabChange('playlists')}
+            className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors ${
+              activeTab === 'playlists' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+            }`}
+          >
+            <ListMusic className="h-5 w-5" />
+            <span className="text-[10px] mt-1 font-medium">Playlists</span>
+          </button>
+          <button
             onClick={() => onTabChange('stats')}
             className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors ${
               activeTab === 'stats' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
@@ -135,6 +160,15 @@ export function Sidebar({ activeTab, onTabChange, unreadCount = 0 }: SidebarProp
               </span>
             )}
             <span className="text-[10px] mt-1 font-medium">Alerts</span>
+          </button>
+          <button
+            onClick={() => onTabChange('myblog')}
+            className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors ${
+              activeTab === 'myblog' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+            }`}
+          >
+            <BookOpen className="h-5 w-5" />
+            <span className="text-[10px] mt-1 font-medium">MyBlog</span>
           </button>
         </div>
       </nav>

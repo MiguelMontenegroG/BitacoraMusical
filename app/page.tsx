@@ -9,6 +9,8 @@ import { SearchBar } from '@/components/SearchBar';
 import { MusicGrid } from '@/components/MusicGrid';
 import { AlbumsView } from '@/components/AlbumsView';
 import { ArtistsView } from '@/components/ArtistsView';
+import { PlaylistsView } from '@/components/PlaylistsView';
+import { MyBlogView } from '@/components/MyBlogView';
 import { Dashboard } from '@/components/Dashboard';
 import { NotificationsView } from '@/components/NotificationsView';
 import { RecommendationForm } from '@/components/RecommendationForm';
@@ -21,7 +23,7 @@ export default function Home() {
   const { entries, isLoaded, addEntry, updateEntry, deleteEntry } = useMusicJournal();
   const { user, signOut, loading: authLoading } = useAuth();
   const { unreadCount } = useRecommendations();
-  const [activeTab, setActiveTab] = useState<'journal' | 'albums' | 'artists' | 'stats' | 'notifications'>('journal');
+  const [activeTab, setActiveTab] = useState<'journal' | 'albums' | 'artists' | 'playlists' | 'stats' | 'notifications' | 'myblog'>('journal');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -62,7 +64,9 @@ export default function Home() {
                   {activeTab === 'journal' ? "My Music Blog" : 
                    activeTab === 'albums' ? 'My Albums' : 
                    activeTab === 'artists' ? 'My Artists' : 
+                   activeTab === 'playlists' ? 'My Playlists' :
                    activeTab === 'notifications' ? 'Notifications' :
+                   activeTab === 'myblog' ? 'MyBlog' :
                    'Statistics'}
                 </h2>
                 <p className="text-muted-foreground text-xs md:text-sm mt-1">
@@ -72,8 +76,12 @@ export default function Home() {
                     ? 'Visualiza y gestiona tu colección de álbumes'
                     : activeTab === 'artists'
                     ? 'Explora tus artistas favoritos y su discografía'
+                    : activeTab === 'playlists'
+                    ? 'Crea y gestiona tus colecciones de musica favoritas'
                     : activeTab === 'notifications'
                     ? 'Revisa las recomendaciones de tus oyentes'
+                    : activeTab === 'myblog'
+                    ? 'Mi espacio personal de escritura'
                     : 'Visualiza tus patrones y preferencias de escucha'}
                 </p>
               </div>
@@ -132,6 +140,8 @@ export default function Home() {
               />
             ) : activeTab === 'artists' ? (
               <ArtistsView entries={entries} />
+            ) : activeTab === 'playlists' ? (
+              <PlaylistsView />
             ) : activeTab === 'notifications' ? (
               user ? <NotificationsView /> : (
                 <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -141,6 +151,8 @@ export default function Home() {
                   </Button>
                 </div>
               )
+            ) : activeTab === 'myblog' ? (
+              <MyBlogView />
             ) : (
               <Dashboard entries={entries} />
             )}

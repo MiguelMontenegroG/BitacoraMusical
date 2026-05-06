@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { MusicEntry } from '@/hooks/useMusicJournal';
-import { Disc, Star, Music, Search, X } from 'lucide-react';
+import { Disc, Star, Music, Search, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { AlbumDetailsModal } from './AlbumDetailsModal';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -27,10 +27,10 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12); // 12 elementos por página por defecto
 
-  // Filtrar álbumes y EPs (entradas de tipo 'album' o 'ep')
+  // Filtrar Ã¡lbumes y EPs (entradas de tipo 'album' o 'ep')
   const allAlbums = entries.filter(entry => entry.type === 'album' || entry.type === 'ep');
 
-  // Agrupar por álbum único (evitar duplicados)
+  // Agrupar por Ã¡lbum Ãºnico (evitar duplicados)
   const uniqueAlbumsMap = allAlbums.reduce((acc, album) => {
     const key = `${album.title} - ${album.artist}`;
     if (!acc[key]) {
@@ -41,11 +41,11 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
 
   let albumList = Object.values(uniqueAlbumsMap);
 
-  // Filtrar por búsqueda si hay query
+  // Filtrar por bÃºsqueda si hay query
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase().trim();
     
-    // Encontrar artistas que tienen canciones que coinciden con la búsqueda
+    // Encontrar artistas que tienen canciones que coinciden con la bÃºsqueda
     const artistsWithMatchingSongs = new Set(
       entries
         .filter(e => e.type === 'song' && e.title.toLowerCase().includes(query))
@@ -53,7 +53,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
     );
     
     albumList = albumList.filter(album => {
-      // Buscar por nombre de álbum
+      // Buscar por nombre de Ã¡lbum
       const matchTitle = album.title.toLowerCase().includes(query);
       
       // Buscar por artista
@@ -71,8 +71,8 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <div className="text-muted-foreground text-center space-y-2">
           <Disc className="h-16 w-16 mx-auto opacity-50" />
-          <p className="text-xl">📀 Aún no hay álbumes o EPs</p>
-          <p className="text-sm">¡Busca un álbum o EP y califícalo para verlo aquí!</p>
+          <p className="text-xl">ðŸ“€ AÃºn no hay Ã¡lbumes o EPs</p>
+          <p className="text-sm">Â¡Busca un Ã¡lbum o EP y califÃ­calo para verlo aquÃ­!</p>
         </div>
       </div>
     );
@@ -91,9 +91,9 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
     setShowAlbumDetails(true);
   };
 
-  // Calcular estadísticas para cada álbum/EP
+  // Calcular estadÃ­sticas para cada Ã¡lbum/EP
   const getAlbumStats = (album: MusicEntry) => {
-    // Buscar canciones que coincidan con este álbum específico
+    // Buscar canciones que coincidan con este Ã¡lbum especÃ­fico
     const albumSongs = entries.filter(e => {
       return e.type === 'song' && e.artist === album.artist;
     });
@@ -114,7 +114,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Buscar por álbum, artista o canción..."
+            placeholder="Buscar por Ã¡lbum, artista o canciÃ³n..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-10 bg-secondary border-border hover:border-primary/50 focus:border-primary"
@@ -143,7 +143,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
           <div className="text-muted-foreground text-center space-y-2">
             <Search className="h-16 w-16 mx-auto opacity-50" />
             <p className="text-xl">No se encontraron resultados</p>
-            <p className="text-sm">Intenta con otro término de búsqueda</p>
+            <p className="text-sm">Intenta con otro tÃ©rmino de bÃºsqueda</p>
           </div>
         </div>
       ) : (
@@ -164,7 +164,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                   alt={album.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
-                {/* Overlay con botón de ver canciones */}
+                {/* Overlay con botÃ³n de ver canciones */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
                   <span className="text-white font-medium text-sm flex items-center gap-2">
                     <Music className="h-4 w-4" />
@@ -185,20 +185,20 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                   </p>
                 </div>
 
-                {/* Match Badges - Solo mostrar cuando hay búsqueda */}
+                {/* Match Badges - Solo mostrar cuando hay bÃºsqueda */}
                 {searchQuery && (
                   <div className="flex flex-wrap gap-1">
-                    {/* Verificar match por título */}
+                    {/* Verificar match por tÃ­tulo */}
                     {album.title.toLowerCase().includes(searchQuery.toLowerCase()) && (
                       <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-blue-500/20 text-blue-600 border-blue-500/30">
-                        💿 Álbum
+                        ðŸ’¿ Ãlbum
                       </Badge>
                     )}
-                    {/* Verificar match por artista (solo si no hay match por título) */}
+                    {/* Verificar match por artista (solo si no hay match por tÃ­tulo) */}
                     {!album.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
                      album.artist.toLowerCase().includes(searchQuery.toLowerCase()) && (
                       <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-purple-500/20 text-purple-600 border-purple-500/30">
-                        👤 Artista
+                        ðŸ‘¤ Artista
                       </Badge>
                     )}
                     {/* Verificar si el artista tiene canciones que coinciden */}
@@ -208,7 +208,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                       e.title.toLowerCase().includes(searchQuery.toLowerCase())
                     ) && !album.title.toLowerCase().includes(searchQuery.toLowerCase()) && (
                       <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-green-500/20 text-green-600 border-green-500/30">
-                        🎵 Tiene canción(es)
+                        ðŸŽµ Tiene canciÃ³n(es)
                       </Badge>
                     )}
                   </div>
@@ -282,7 +282,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
             }
             
             if (!result) {
-              toast.error('Debes iniciar sesión para guardar');
+              toast.error('Debes iniciar sesiÃ³n para guardar');
             }
           }}
           existingEntries={existingEntries}
@@ -291,3 +291,4 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
     </>
   );
 }
+

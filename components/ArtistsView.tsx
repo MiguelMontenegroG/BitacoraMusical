@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MusicEntry } from '@/hooks/useMusicJournal';
 import { Card } from './ui/card';
 import { Disc, Music, Star, TrendingUp, Award, Search, X } from 'lucide-react';
@@ -181,6 +181,8 @@ interface ArtistsViewProps {
 export function ArtistsView({ entries }: ArtistsViewProps) {
   const [selectedArtist, setSelectedArtist] = useState<ArtistData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
 
   // Agrupar entradas por artista
   const artistsMap = entries.reduce((acc, entry) => {
@@ -192,7 +194,7 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
   }, {} as Record<string, MusicEntry[]>);
 
   // Convertir a array y calcular estadísticas
-  let artists: ArtistData[] = Object.entries(artistsMap)
+  const allArtists: ArtistData[] = Object.entries(artistsMap)
     .map(([name, artistEntries]) => {
       const albums = artistEntries.filter(e => e.type === 'album');
       const songs = artistEntries.filter(e => e.type === 'song');
@@ -214,12 +216,21 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
     .sort((a, b) => b.entries.length - a.entries.length);
 
   // Filtrar por búsqueda si hay query
-  if (searchQuery.trim()) {
-    const query = searchQuery.toLowerCase().trim();
-    artists = artists.filter(artist => 
-      artist.name.toLowerCase().includes(query)
-    );
-  }
+  const filteredArtists = searchQuery.trim() 
+    ? allArtists.filter(artist => 
+        artist.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+      )
+    : allArtists;
+
+  // Calcular datos de paginación
+  const totalPages = Math.ceil(filteredArtists.length / ITEMS_PER_PAGE);
+  
+  // Obtener artistas de la página actual
+  const artists = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return filteredArtists.slice(start, end);
+  }, [filteredArtists, currentPage]);
 
   if (artists.length === 0 && !searchQuery) {
     return (
