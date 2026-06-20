@@ -33,6 +33,7 @@ interface AlbumDetailsModalProps {
   };
   onSubmit: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
   existingEntries: MusicEntry[]; // Para verificar qué canciones ya están calificadas
+  canShowRatings?: boolean; // Si es false, se ocultan los numeros de calificacion
 }
 
 export function AlbumDetailsModal({
@@ -41,6 +42,7 @@ export function AlbumDetailsModal({
   album,
   onSubmit,
   existingEntries,
+  canShowRatings = true,
 }: AlbumDetailsModalProps) {
   const [details, setDetails] = useState<AlbumDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -443,98 +445,104 @@ export function AlbumDetailsModal({
                     </p>
                     {details.tracks && details.tracks.length > 0 && (
                       <p className="text-sm text-primary">
-                        {getCalifiedTracksCount()} de {details.tracks.length} canciones calificadas
+                        {canShowRatings ? (
+                          <>{getCalifiedTracksCount()} de {details.tracks.length} canciones calificadas</>
+                        ) : (
+                          <>{details.tracks.length} canciones</>
+                        )}
                       </p>
                     )}
                   </div>
                   
                   {/* Album Rating Section */}
-                  <div className="space-y-3 mt-4">
-                    <div className="space-y-2">
-                      <Button onClick={handleRateAlbum} variant="outline" className="w-full sm:w-auto">
-                        <Disc className="h-4 w-4 mr-2" />
-                        {existingEntries.some(e => e.title === album.title && e.type === 'album') ? 'Editar Álbum Manualmente' : 'Calificar Álbum Manualmente'}
-                      </Button>
-                      
-                      {averageRating !== null && getCalifiedTracksCount() > 0 && (
-                        <Button 
-                          onClick={() => {
-                            // Clasificar según número de tracks
-                            const trackCount = details?.tracks?.length || 0;
-                            let type: 'album' | 'song' | 'ep' = 'album';
-                            
-                            if (trackCount === 1) {
-                              type = 'song'; // Single
-                            } else if (trackCount >= 2 && trackCount <= 4) {
-                              type = 'ep'; // EP
-                            } else {
-                              type = 'album'; // Álbum completo
-                            }
-                            
-                            // Guardar con el promedio automáticamente
-                            onSubmit({
-                              title: album.title,
-                              artist: album.artist,
-                              coverUrl: album.coverUrl,
-                              rating: averageRating,
-                              review: `Promedio automático de ${getCalifiedTracksCount()} canciones`,
-                              type,
-                              mood: '',
-                              trackCount,
-                            });
-                            toast.success(`¡${type === 'song' ? 'Single' : type === 'ep' ? 'EP' : 'Álbum'} guardado con promedio ${averageRating.toFixed(1)}/10!`);
-                          }}
-                          className="w-full bg-primary hover:bg-primary/90"
-                        >
-                          <Save className="h-4 w-4 mr-2" />
-                          Guardar {details?.tracks && details.tracks.length === 1 ? 'Single' : details?.tracks && details.tracks.length <= 4 ? 'EP' : 'Álbum'} con Promedio ({averageRating.toFixed(1)})
+                  {canShowRatings && (
+                    <div className="space-y-3 mt-4">
+                      <div className="space-y-2">
+                        <Button onClick={handleRateAlbum} variant="outline" className="w-full sm:w-auto">
+                          <Disc className="h-4 w-4 mr-2" />
+                          {existingEntries.some(e => e.title === album.title && e.type === 'album') ? 'Editar Álbum Manualmente' : 'Calificar Álbum Manualmente'}
                         </Button>
-                      )}
-                    </div>
-                    
-                    {albumRating && (
-                      <div className="space-y-3 p-3 bg-card rounded-lg border border-border">
-                        <div>
-                          <label className="text-xs font-medium text-foreground mb-1 block">
-                            Rating del Álbum (0-10)
-                          </label>
-                          <div className="relative">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="10"
-                              step="0.1"
-                              value={albumRating.rating}
-                              onChange={(e) => handleRatingInputChange('album', e)}
-                              placeholder="Ej: 7.5"
-                              className="bg-secondary border-border text-sm font-semibold"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
-                              /10
-                            </span>
+
+                        {averageRating !== null && getCalifiedTracksCount() > 0 && (
+                          <Button
+                            onClick={() => {
+                              // Clasificar según número de tracks
+                              const trackCount = details?.tracks?.length || 0;
+                              let type: 'album' | 'song' | 'ep' = 'album';
+
+                              if (trackCount === 1) {
+                                type = 'song'; // Single
+                              } else if (trackCount >= 2 && trackCount <= 4) {
+                                type = 'ep'; // EP
+                              } else {
+                                type = 'album'; // Álbum completo
+                              }
+
+                              // Guardar con el promedio automáticamente
+                              onSubmit({
+                                title: album.title,
+                                artist: album.artist,
+                                coverUrl: album.coverUrl,
+                                rating: averageRating,
+                                review: `Promedio automático de ${getCalifiedTracksCount()} canciones`,
+                                type,
+                                mood: '',
+                                trackCount,
+                              });
+                              toast.success(`¡${type === 'song' ? 'Single' : type === 'ep' ? 'EP' : 'Álbum'} guardado con promedio ${averageRating.toFixed(1)}/10!`);
+                            }}
+                            className="w-full bg-primary hover:bg-primary/90"
+                          >
+                            <Save className="h-4 w-4 mr-2" />
+                            Guardar {details?.tracks && details.tracks.length === 1 ? 'Single' : details?.tracks && details.tracks.length <= 4 ? 'EP' : 'Álbum'} con Promedio ({averageRating.toFixed(1)})
+                          </Button>
+                        )}
+                      </div>
+
+                      {albumRating && (
+                        <div className="space-y-3 p-3 bg-card rounded-lg border border-border">
+                          <div>
+                            <label className="text-xs font-medium text-foreground mb-1 block">
+                              Rating del Álbum (0-10)
+                            </label>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                min="0"
+                                max="10"
+                                step="0.1"
+                                value={albumRating.rating}
+                                onChange={(e) => handleRatingInputChange('album', e)}
+                                placeholder="Ej: 7.5"
+                                className="bg-secondary border-border text-sm font-semibold"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                                /10
+                              </span>
+                            </div>
+                          </div>
+
+                          <Textarea
+                            placeholder="Review del álbum (opcional)..."
+                            value={albumRating.review}
+                            onChange={(e) => setAlbumRating(prev => prev ? {...prev, review: e.target.value} : null)}
+                            rows={2}
+                            className="text-sm"
+                          />
+
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={handleSaveAlbum} className="flex-1">
+                              <Save className="h-4 w-4 mr-2" />
+                              Guardar Álbum
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setAlbumRating(null)}>
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        
-                        <Textarea
-                          placeholder="Review del álbum (opcional)..."
-                          value={albumRating.review}
-                          onChange={(e) => setAlbumRating(prev => prev ? {...prev, review: e.target.value} : null)}
-                          rows={2}
-                          className="text-sm"
-                        />
-                        
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={handleSaveAlbum} className="flex-1">
-                            <Save className="h-4 w-4 mr-2" />
-                            Guardar Álbum
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setAlbumRating(null)}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -550,16 +558,28 @@ export function AlbumDetailsModal({
                     
                     // Si no hay ninguna canción calificada, mostrar mensaje
                     const hasRatings = chartData.some(d => d.rating !== null);
+
                     if (!hasRatings) {
                       return (
                         <div className="bg-secondary/50 border border-border rounded-lg p-6 text-center">
                           <TrendingUp className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
-                          <p className="text-sm text-muted-foreground">Aún no has calificado ninguna canción de este álbum</p>
-                          <p className="text-xs text-muted-foreground mt-1">Califica algunas canciones para ver la gráfica</p>
+                          {canShowRatings ? (
+                            <>
+                              <p className="text-sm text-muted-foreground">Aún no has calificado ninguna canción de este álbum</p>
+                              <p className="text-xs text-muted-foreground mt-1">Califica algunas canciones para ver la gráfica</p>
+                            </>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">Calificaciones ocultas para visitantes</p>
+                          )}
                         </div>
                       );
                     }
                     
+                    // Si no se pueden mostrar ratings, ocultar la grafica completamente
+                    if (!canShowRatings) {
+                      return null;
+                    }
+
                     return (
                       <div className="bg-secondary/50 border border-border rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-4">
@@ -701,7 +721,7 @@ export function AlbumDetailsModal({
                                   <p className="text-sm font-medium text-foreground truncate">
                                     {track.name}
                                   </p>
-                                  {isRated && (
+                                  {isRated && canShowRatings && (
                                     <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                                   )}
                                 </div>
@@ -712,7 +732,7 @@ export function AlbumDetailsModal({
                               <span className="text-xs text-muted-foreground flex-shrink-0">
                                 {formatDuration(track.duration)}
                               </span>
-                              {isRated && !isExpanded && (
+                              {isRated && !isExpanded && canShowRatings && (
                                 <span className="text-xs text-primary font-medium">
                                   ★ {existingEntries.find(e => e.title === track.name && e.type === 'song')?.rating.toFixed(1)}
                                 </span>
@@ -721,7 +741,7 @@ export function AlbumDetailsModal({
                           </div>
                           
                           {/* Expanded Track Rating */}
-                          {isExpanded && trackData && (
+                          {isExpanded && trackData && canShowRatings && (
                             <div className="ml-9 p-3 bg-card border border-border rounded-lg space-y-3 animate-in slide-in-from-top-2">
                               <div>
                                 <label className="text-xs font-medium text-foreground mb-1 block">
@@ -803,18 +823,22 @@ export function AlbumDetailsModal({
                 <div className="text-center py-8 text-muted-foreground">
                   <Music className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>No track information available for this album</p>
-                  <Button onClick={handleRateAlbum} variant="outline" className="mt-4">
-                    Rate the Album Anyway
-                  </Button>
+                  {canShowRatings && (
+                    <Button onClick={handleRateAlbum} variant="outline" className="mt-4">
+                      Rate the Album Anyway
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <p>Could not load album details</p>
-              <Button onClick={handleRateAlbum} variant="outline" className="mt-4">
-                Rate Album Without Details
-              </Button>
+              {canShowRatings && (
+                <Button onClick={handleRateAlbum} variant="outline" className="mt-4">
+                  Rate Album Without Details
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>

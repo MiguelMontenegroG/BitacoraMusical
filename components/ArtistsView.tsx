@@ -21,9 +21,10 @@ interface ArtistData {
 interface ArtistDetailsModalProps {
   artist: ArtistData;
   onClose: () => void;
+  canShowRatings?: boolean;
 }
 
-function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
+function ArtistDetailsModal({ artist, onClose, canShowRatings = true }: ArtistDetailsModalProps) {
   const albums = artist.entries.filter(e => e.type === 'album').sort((a, b) => b.rating - a.rating);
   const songs = artist.entries.filter(e => e.type === 'song').sort((a, b) => b.rating - a.rating);
   
@@ -76,21 +77,37 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 p-4 md:p-6 border-b border-border pt-6 md:pt-8">
           <Card className="bg-secondary border-border p-3 md:p-4 text-center">
             <p className="text-[10px] md:text-xs text-muted-foreground">Rating General</p>
-            <p className="text-xl md:text-2xl font-bold text-primary">{artist.averageRating.toFixed(1)}</p>
+            {canShowRatings ? (
+              <p className="text-xl md:text-2xl font-bold text-primary">{artist.averageRating.toFixed(1)}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Oculto</p>
+            )}
           </Card>
           <Card className="bg-secondary border-border p-3 md:p-4 text-center">
             <p className="text-[10px] md:text-xs text-muted-foreground">Rating Álbumes</p>
-            <p className="text-xl md:text-2xl font-bold text-accent">{albumAvgRating.toFixed(1)}</p>
+            {canShowRatings ? (
+              <p className="text-xl md:text-2xl font-bold text-accent">{albumAvgRating.toFixed(1)}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Oculto</p>
+            )}
           </Card>
           <Card className="bg-secondary border-border p-3 md:p-4 text-center">
             <p className="text-[10px] md:text-xs text-muted-foreground">Rating Canciones</p>
-            <p className="text-xl md:text-2xl font-bold text-accent">{songAvgRating.toFixed(1)}</p>
+            {canShowRatings ? (
+              <p className="text-xl md:text-2xl font-bold text-accent">{songAvgRating.toFixed(1)}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Oculto</p>
+            )}
           </Card>
           <Card className="bg-secondary border-border p-3 md:p-4 text-center">
             <p className="text-[10px] md:text-xs text-muted-foreground">Mejor Rating</p>
-            <p className="text-xl md:text-2xl font-bold text-primary">
-              {Math.max(...artist.entries.map(e => e.rating)).toFixed(1)}
-            </p>
+            {canShowRatings ? (
+              <p className="text-xl md:text-2xl font-bold text-primary">
+                {Math.max(...artist.entries.map(e => e.rating)).toFixed(1)}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Oculto</p>
+            )}
           </Card>
         </div>
 
@@ -116,9 +133,11 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
                         <Disc className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground" />
                       </div>
                     )}
-                    <div className="absolute top-1 right-1 md:top-2 md:right-2 bg-primary px-1.5 py-0.5 md:px-2 md:py-1 rounded-md">
-                      <span className="text-[10px] md:text-xs font-bold text-primary-foreground">★ {album.rating.toFixed(1)}</span>
-                    </div>
+                    {canShowRatings && (
+                      <div className="absolute top-1 right-1 md:top-2 md:right-2 bg-primary px-1.5 py-0.5 md:px-2 md:py-1 rounded-md">
+                        <span className="text-[10px] md:text-xs font-bold text-primary-foreground">★ {album.rating.toFixed(1)}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="p-2 md:p-3">
                     <h4 className="font-semibold text-xs md:text-sm text-foreground truncate">{album.title}</h4>
@@ -159,10 +178,14 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
                       <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 truncate">Tags: {song.mood}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-                    <Star className="h-3 w-3 md:h-4 md:w-4 fill-accent text-accent" />
-                    <span className="text-xs md:text-sm font-bold text-foreground">{song.rating.toFixed(1)}</span>
-                  </div>
+                  {canShowRatings ? (
+                    <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                      <Star className="h-3 w-3 md:h-4 md:w-4 fill-accent text-accent" />
+                      <span className="text-xs md:text-sm font-bold text-foreground">{song.rating.toFixed(1)}</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">Oculto</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -176,9 +199,11 @@ function ArtistDetailsModal({ artist, onClose }: ArtistDetailsModalProps) {
 
 interface ArtistsViewProps {
   entries: MusicEntry[];
+  ratingsVisible?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export function ArtistsView({ entries }: ArtistsViewProps) {
+export function ArtistsView({ entries, ratingsVisible = true, isAuthenticated = false }: ArtistsViewProps) {
   const [selectedArtist, setSelectedArtist] = useState<ArtistData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -312,12 +337,14 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
               )}
               
               {/* Overlay with rating */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-white font-bold">{artist.averageRating.toFixed(1)}</span>
+              {(ratingsVisible || isAuthenticated) && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                    <span className="text-white font-bold">{artist.averageRating.toFixed(1)}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Artist Info */}
@@ -356,6 +383,7 @@ export function ArtistsView({ entries }: ArtistsViewProps) {
         <ArtistDetailsModal 
           artist={selectedArtist} 
           onClose={() => setSelectedArtist(null)} 
+          canShowRatings={ratingsVisible || isAuthenticated}
         />
       )}
     </>

@@ -15,9 +15,11 @@ import { logger } from '@/lib/logger';
 interface SearchBarProps {
   onAddEntry: (entry: Omit<MusicEntry, 'id' | 'date'>) => void;
   existingEntries: MusicEntry[];
+  ratingsVisible?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
+export function SearchBar({ onAddEntry, existingEntries, ratingsVisible = true, isAuthenticated = false }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -337,6 +339,7 @@ export function SearchBar({ onAddEntry, existingEntries }: SearchBarProps) {
             album={selectedResult}
             onSubmit={handleAddEntry}
             existingEntries={existingEntries}
+            canShowRatings={ratingsVisible || isAuthenticated}
           />
         </>
       )}

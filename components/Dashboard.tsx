@@ -16,6 +16,8 @@ import { TrendingUp, TrendingDown, Minus, Star, Disc, Music } from 'lucide-react
 
 interface DashboardProps {
   entries: MusicEntry[];
+  ratingsVisible?: boolean;
+  isAuthenticated?: boolean;
 }
 
 interface RatingRangeData {
@@ -58,7 +60,8 @@ interface AlbumData {
   date: string;
 }
 
-export function Dashboard({ entries }: DashboardProps) {
+export function Dashboard({ entries, ratingsVisible = true, isAuthenticated = false }: DashboardProps) {
+  const canShowRatings = ratingsVisible || isAuthenticated;
   const ratingColors = [
     'oklch(0.577 0.245 27.325)',
     'oklch(0.65 0.18 50)',
@@ -448,24 +451,36 @@ export function Dashboard({ entries }: DashboardProps) {
             {i === 2 && (
               <>
                 <p className="text-xs text-muted-foreground">Promedio General</p>
-                <div className="flex items-center justify-center gap-2">
-                  <p className="text-2xl font-bold text-primary">{avgRating}</p>
-                  {trend.direction === 'up' && <TrendingUp className="h-4 w-4 text-green-500" />}
-                  {trend.direction === 'down' && <TrendingDown className="h-4 w-4 text-red-500" />}
-                  {trend.direction === 'neutral' && <Minus className="h-4 w-4 text-muted-foreground" />}
-                </div>
+                {canShowRatings ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <p className="text-2xl font-bold text-primary">{avgRating}</p>
+                    {trend.direction === 'up' && <TrendingUp className="h-4 w-4 text-green-500" />}
+                    {trend.direction === 'down' && <TrendingDown className="h-4 w-4 text-red-500" />}
+                    {trend.direction === 'neutral' && <Minus className="h-4 w-4 text-muted-foreground" />}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic mt-1">Oculto</p>
+                )}
               </>
             )}
             {i === 3 && (
               <>
                 <p className="text-xs text-muted-foreground">Mejor Rating</p>
-                <p className="text-2xl font-bold text-accent">{highestRating.toFixed(1)}</p>
+                {canShowRatings ? (
+                  <p className="text-2xl font-bold text-accent">{highestRating.toFixed(1)}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic mt-1">Oculto</p>
+                )}
               </>
             )}
             {i === 4 && (
               <>
                 <p className="text-xs text-muted-foreground">Peor Rating</p>
-                <p className="text-2xl font-bold text-primary">{lowestRating.toFixed(1)}</p>
+                {canShowRatings ? (
+                  <p className="text-2xl font-bold text-primary">{lowestRating.toFixed(1)}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic mt-1">Oculto</p>
+                )}
               </>
             )}
           </Card>
@@ -504,7 +519,7 @@ export function Dashboard({ entries }: DashboardProps) {
         <Card className="bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border-border/50 p-6 hover:shadow-lg transition-all duration-300">
           <h3 className="text-lg font-semibold text-foreground mb-2">Top 5 Artistas más escuchados</h3>
           <p className="text-xs text-muted-foreground mb-4">Más escuchados con rating promedio</p>
-          {topArtists.length > 0 ? (
+          {topArtists.length > 0 && canShowRatings ? (
             <div className="space-y-3">
               {topArtists.map((artist) => {
                 const maxCount = topArtists[0].count;
@@ -529,6 +544,8 @@ export function Dashboard({ entries }: DashboardProps) {
                 );
               })}
             </div>
+          ) : !canShowRatings ? (
+            <p className="text-muted-foreground text-center py-8">Ratings ocultos para visitantes</p>
           ) : (
             <p className="text-muted-foreground text-center py-8">Sin datos aún</p>
           )}
@@ -554,14 +571,16 @@ export function Dashboard({ entries }: DashboardProps) {
                   style={{ fontSize: '12px' }}
                   label={{ value: 'Entradas', angle: -90, position: 'insideLeft', fill: 'var(--muted-foreground)' }}
                 />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[0, 10]}
-                  stroke="var(--accent)"
-                  style={{ fontSize: '12px' }}
-                  label={{ value: 'Rating', angle: 90, position: 'insideRight', fill: 'var(--accent)' }}
-                />
+                {canShowRatings && (
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    domain={[0, 10]}
+                    stroke="var(--accent)"
+                    style={{ fontSize: '12px' }}
+                    label={{ value: 'Rating', angle: 90, position: 'insideRight', fill: 'var(--accent)' }}
+                  />
+                )}
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'var(--card)',
@@ -587,16 +606,18 @@ export function Dashboard({ entries }: DashboardProps) {
                   dot={{ fill: 'var(--primary)', r: 4 }}
                   activeDot={{ r: 6 }}
                 />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="averageRating"
-                  name="Rating Promedio"
-                  stroke="var(--accent)"
-                  strokeWidth={2}
-                  dot={{ fill: 'var(--accent)', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
+                {canShowRatings && (
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="averageRating"
+                    name="Rating Promedio"
+                    stroke="var(--accent)"
+                    strokeWidth={2}
+                    dot={{ fill: 'var(--accent)', r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -608,7 +629,7 @@ export function Dashboard({ entries }: DashboardProps) {
           <Card className="bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border-border/50 p-6 hover:shadow-lg transition-all duration-300">
             <h3 className="text-lg font-semibold text-foreground mb-2">Rating por Tipo</h3>
             <p className="text-xs text-muted-foreground mb-4">Comparación álbumes vs canciones</p>
-            {ratingByType.some((d) => d.count > 0) ? (
+            {canShowRatings && ratingByType.some((d) => d.count > 0) ? (
               <div className="space-y-4">
                 {ratingByType.map((item) => (
                   <div key={item.type} className="space-y-2">
@@ -628,6 +649,8 @@ export function Dashboard({ entries }: DashboardProps) {
                   </div>
                 ))}
               </div>
+            ) : !canShowRatings ? (
+              <p className="text-muted-foreground text-center py-8">Ratings ocultos para visitantes</p>
             ) : (
               <p className="text-muted-foreground text-center py-8">Sin datos aún</p>
             )}
@@ -636,7 +659,7 @@ export function Dashboard({ entries }: DashboardProps) {
           <Card className="bg-gradient-to-br from-secondary/80 to-card/80 backdrop-blur-sm border-border/50 p-6 hover:shadow-lg transition-all duration-300">
             <h3 className="text-lg font-semibold text-foreground mb-2">Artistas mejor puntuados</h3>
             <p className="text-xs text-muted-foreground mb-4">Top 5 con mayor rating promedio</p>
-            {topRatedArtists.length > 0 ? (
+            {topRatedArtists.length > 0 && canShowRatings ? (
               <div className="space-y-3">
                 {topRatedArtists.map((artist, index) => {
                   const maxRating = topRatedArtists[0].averageRating;
@@ -661,6 +684,8 @@ export function Dashboard({ entries }: DashboardProps) {
                   );
                 })}
               </div>
+            ) : !canShowRatings ? (
+              <p className="text-muted-foreground text-center py-8">Ratings ocultos para visitantes</p>
             ) : (
               <p className="text-muted-foreground text-center py-8">Sin datos aún</p>
             )}
@@ -669,7 +694,7 @@ export function Dashboard({ entries }: DashboardProps) {
       </div>
 
       {/* Top 5 Albums - Destacados */}
-      {allAlbums.length > 0 && (
+      {allAlbums.length > 0 && canShowRatings && (
         <>
           <Card className="bg-gradient-to-br from-secondary to-card border-border p-6">
             <div className="flex items-center gap-2 mb-2">
@@ -809,7 +834,7 @@ export function Dashboard({ entries }: DashboardProps) {
       )}
 
       {/* Top EPs Section */}
-      {allEPs.length > 0 && (
+      {allEPs.length > 0 && canShowRatings && (
         <>
           <Card className="bg-gradient-to-br from-secondary to-card border-border p-6">
             <div className="flex items-center gap-2 mb-2">
@@ -949,7 +974,7 @@ export function Dashboard({ entries }: DashboardProps) {
       )}
 
       {/* Top Songs Section */}
-      {allSongs.length > 0 && (
+      {allSongs.length > 0 && canShowRatings && (
         <>
           <Card className="bg-gradient-to-br from-secondary to-card border-border p-6">
             <div className="flex items-center gap-2 mb-2">

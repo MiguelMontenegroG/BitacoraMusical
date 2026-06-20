@@ -8,15 +8,18 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
+import { RatingBadge } from './RatingBadge';
 
 interface AlbumsViewProps {
   entries: MusicEntry[];
   existingEntries: MusicEntry[];
   onAddEntry: (entry: Omit<MusicEntry, 'id' | 'date'>) => Promise<void>;
   onUpdateEntry: (id: string, updates: Partial<MusicEntry>) => Promise<void>;
+  ratingsVisible?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry }: AlbumsViewProps) {
+export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry, ratingsVisible = true, isAuthenticated = false }: AlbumsViewProps) {
   const [selectedAlbum, setSelectedAlbum] = useState<{
     title: string;
     artist: string;
@@ -26,6 +29,9 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12); // 12 elementos por página por defecto
+
+  // Determinar si se pueden ver los numeros de calificacion
+  const canShowRatings = ratingsVisible === true || isAuthenticated === true;
 
   // Filtrar álbumes y EPs (entradas de tipo 'album' o 'ep')
   const allAlbums = entries.filter(entry => entry.type === 'album' || entry.type === 'ep');
@@ -215,13 +221,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                 )}
 
                 {/* Album Rating */}
-                <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 fill-primary text-primary" />
-                  <span className="text-base font-bold text-foreground">
-                    {album.rating.toFixed(1)}
-                  </span>
-                  <span className="text-sm text-muted-foreground">/10</span>
-                </div>
+                <RatingBadge rating={album.rating} size="md" showNumber={canShowRatings} />
 
                 {/* Songs Info */}
                 <div className="space-y-2 pt-1 border-t border-border/50">
@@ -232,7 +232,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
                     </span>
                   </div>
                   
-                  {stats.averageRating !== null && (
+                  {stats.averageRating !== null && canShowRatings && (
                     <div className="flex items-center gap-2 text-sm">
                       <Star className="h-4 w-4 fill-accent text-accent" />
                       <span className="text-accent font-semibold">
@@ -286,6 +286,7 @@ export function AlbumsView({ entries, existingEntries, onAddEntry, onUpdateEntry
             }
           }}
           existingEntries={existingEntries}
+          canShowRatings={canShowRatings}
         />
       )}
     </>

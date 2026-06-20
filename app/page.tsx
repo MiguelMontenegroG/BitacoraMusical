@@ -18,12 +18,18 @@ import { LoginModal } from '@/components/LoginModal';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { RatingsVisibilityProvider, useRatingsVisibilityContext } from '@/components/RatingsVisibilityProvider';
+import { RatingsVisibilitySwitch } from '@/components/RatingsVisibilitySwitch';
 
-export default function Home() {
+function HomeContent() {
   const { entries, isLoaded, addEntry, updateEntry, deleteEntry } = useMusicJournal();
   const { user, signOut, loading: authLoading } = useAuth();
   const { unreadCount } = useRecommendations();
+  const { ratingsVisible, isLoading: ratingsLoading, toggleRatingsVisibility } = useRatingsVisibilityContext();
   const [activeTab, setActiveTab] = useState<'journal' | 'albums' | 'artists' | 'playlists' | 'stats' | 'notifications' | 'myblog'>('journal');
+
+  // Debug: Log cuando cambia ratingsVisible
+  console.log('[DEBUG] ratingsVisible en HomeContent:', ratingsVisible, '| user:', !!user);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -35,7 +41,7 @@ export default function Home() {
     }
   };
 
-  if (!isLoaded || authLoading) {
+  if (!isLoaded || authLoading || ratingsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center space-y-4">
@@ -87,7 +93,14 @@ export default function Home() {
               </div>
               
               {/* Auth Status */}
-              <div className="w-full sm:w-auto">
+              <div className="w-full sm:w-auto flex items-center gap-3">
+                {/* Switch de visibilidad de calificaciones */}
+                <RatingsVisibilitySwitch
+                  ratingsVisible={ratingsVisible}
+                  onToggle={toggleRatingsVisibility}
+                  isAuthenticated={!!user}
+                />
+
                 {user ? (
                   <div className="flex items-center gap-2">
                     <span className="text-xs md:text-sm text-muted-foreground font-medium">ImDashie</span>
@@ -109,7 +122,7 @@ export default function Home() {
             {activeTab === 'journal' && (
               <div className="flex flex-col gap-3">
                 <div className="w-full">
-                  <SearchBar onAddEntry={addEntry} existingEntries={entries} />
+                  <SearchBar onAddEntry={addEntry} existingEntries={entries} ratingsVisible={ratingsVisible} isAuthenticated={!!user} />
                 </div>
                 <Button 
                   variant="outline" 
@@ -130,16 +143,24 @@ export default function Home() {
           {/* Content Area */}
           <div className="pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {activeTab === 'journal' ? (
-              <MusicGrid entries={entries} onDelete={deleteEntry} onUpdate={updateEntry} isAuthenticated={!!user} />
+              <MusicGrid
+                entries={entries}
+                onDelete={deleteEntry}
+                onUpdate={updateEntry}
+                isAuthenticated={!!user}
+                ratingsVisible={ratingsVisible}
+              />
             ) : activeTab === 'albums' ? (
               <AlbumsView 
                 entries={entries} 
                 existingEntries={entries}
                 onAddEntry={addEntry}
                 onUpdateEntry={updateEntry}
+                ratingsVisible={ratingsVisible}
+                isAuthenticated={!!user}
               />
             ) : activeTab === 'artists' ? (
-              <ArtistsView entries={entries} />
+              <ArtistsView entries={entries} ratingsVisible={ratingsVisible} isAuthenticated={!!user} />
             ) : activeTab === 'playlists' ? (
               <PlaylistsView />
             ) : activeTab === 'notifications' ? (
@@ -154,7 +175,7 @@ export default function Home() {
             ) : activeTab === 'myblog' ? (
               <MyBlogView />
             ) : (
-              <Dashboard entries={entries} />
+              <Dashboard entries={entries} ratingsVisible={ratingsVisible} isAuthenticated={!!user} />
             )}
           </div>
 
@@ -174,5 +195,13 @@ export default function Home() {
       {/* Login Modal */}
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <RatingsVisibilityProvider>
+      <HomeContent />
+    </RatingsVisibilityProvider>
   );
 }

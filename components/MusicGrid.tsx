@@ -5,19 +5,27 @@ import { MusicEntry } from '@/hooks/useMusicJournal';
 import { Trash2, Star, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { RatingModal } from './RatingModal';
+import { RatingBadge } from './RatingBadge';
 
 interface MusicGridProps {
   entries: MusicEntry[];
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<MusicEntry>) => void;
   isAuthenticated: boolean;
+  ratingsVisible?: boolean;
   itemsPerPage?: number;
 }
 
-export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsPerPage = 12 }: MusicGridProps) {
+export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, ratingsVisible = true, itemsPerPage = 12 }: MusicGridProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingEntry, setEditingEntry] = useState<MusicEntry | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Determinar si se pueden ver las calificaciones
+  // Si ratingsVisible es true, todos ven. Si es false, solo autenticados ven.
+  // Un usuario autenticado SIEMPRE ve las calificaciones.
+  const canShowRatings = ratingsVisible === true || isAuthenticated === true;
+  console.log('[DEBUG] MusicGrid - ratingsVisible:', ratingsVisible, '| isAuthenticated:', isAuthenticated, '| canShowRatings:', canShowRatings);
 
   // Calcular paginación
   const totalPages = Math.ceil(entries.length / itemsPerPage);
@@ -113,13 +121,7 @@ export function MusicGrid({ entries, onDelete, onUpdate, isAuthenticated, itemsP
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 fill-primary text-primary" />
-              <span className="text-base font-bold text-foreground">
-                {entry.rating.toFixed(1)}
-              </span>
-              <span className="text-sm text-muted-foreground">/10</span>
-            </div>
+            <RatingBadge rating={entry.rating} size="md" showNumber={canShowRatings} />
 
             {/* Mood and Type */}
             <div className="flex items-center gap-2 text-sm pt-1 border-t border-border/50">
