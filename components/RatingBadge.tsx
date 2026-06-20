@@ -14,20 +14,20 @@ interface RatingBadgeProps {
  * El numero de calificacion se oculta si showNumber=false.
  *
  * Rangos:
- * - 5.0 a 10.0: Verde con pulgar arriba
- * - 3.0 a 4.9: Naranja con guion neutral
- * - 0 a 2.9: Rojo con pulgar abajo
+ * - 4.5 a 10.0: Verde con pulgar arriba
+ * - 2.0 a 4.4: Naranja con guion neutral
+ * - 0 a 1.9: Rojo con pulgar abajo
  */
 export function RatingBadge({ rating, showNumber = true, size = 'md' }: RatingBadgeProps) {
   const getColorClass = () => {
-    if (rating >= 5.0) return 'bg-green-500';
-    if (rating >= 3.0) return 'bg-orange-500';
+    if (rating >= 4.5) return 'bg-green-500';
+    if (rating >= 2.0) return 'bg-orange-500';
     return 'bg-red-500';
   };
 
   const getTextColorClass = () => {
-    if (rating >= 5.0) return 'text-green-500';
-    if (rating >= 3.0) return 'text-orange-500';
+    if (rating >= 4.5) return 'text-green-500';
+    if (rating >= 2.0) return 'text-orange-500';
     return 'text-red-500';
   };
 
@@ -52,10 +52,10 @@ export function RatingBadge({ rating, showNumber = true, size = 'md' }: RatingBa
   const sizeClass = sizeClasses[size];
 
   const renderCircleContent = () => {
-    if (rating >= 5.0) {
+    if (rating >= 4.5) {
       return <ThumbsUp className={`${sizeClass.iconSize} text-white`} />;
     }
-    if (rating >= 3.0) {
+    if (rating >= 2.0) {
       return <Minus className={`${sizeClass.iconSize} text-white`} />;
     }
     return <ThumbsDown className={`${sizeClass.iconSize} text-white`} />;
